@@ -1,8 +1,13 @@
 <script lang="ts">
 	import backend from '$lib/net/backend';
+	import { isAxiosError } from 'axios';
 	import Temp from './Temp.svelte';
 
+	export let data;
+	let authenticated = data.authenticated;
+
 	const messageDuration = 2000;
+	console.log(data);
 
 	let loginPlaceholder = '';
 	let logoutPlaceholder = '';
@@ -18,9 +23,15 @@
 	async function logIn() {
 		clearLoginMessage();
 		loginPlaceholder = 'Logging in...';
+
+		let data = new FormData();
+		data.append('email', 'a@a.com');
+		data.append('password', 'asdfasdf');
+
 		try {
-			let res = await backend.post('/auth/login', { email: 'a@a.com', password: 'asdfasdf' });
+			let res = await backend.post('/auth/login', data);
 			setLoginMessage('Logged in!');
+			location.reload();
 		} catch (err: any) {
 			let message = 'Error: ' + (err.response.data.message ?? 'an unknown error occured!');
 			setLoginMessage(message);
@@ -32,9 +43,10 @@
 		clearLogoutMessage();
 		logoutPlaceholder = 'Logging out...';
 		try {
-			let res = await backend.post('/auth/signout');
+			let res = await backend.post('/auth/logout');
 			if ((res.status ?? 0) === 200) {
 				setLogoutMessage('Signed out successfully!');
+				location.reload();
 			} else {
 				setLogoutMessage('Something happened ' + JSON.stringify(res));
 			}
@@ -50,39 +62,49 @@
 		checkAuthPlaceholder = 'Checking your auth status...';
 		try {
 			let res = await backend.get('/auth');
-			if ((res.status ?? 0) === 200 && res.data.isAuthenticated !== undefined) {
-				setCheckAuthMessage('Authenticated: ' + (res.data.isAuthenticated ? 'true' : 'false'));
-			} else {
-				setCheckAuthMessage('Something went wrong! ' + JSON.stringify(res));
-			}
+			setCheckAuthMessage('Authenticated: ' + (res.status === 200 ? 'true' : 'false'));
 		} catch (err: any) {
-			let message = 'Error: ' + (err.response.data.message ?? 'an unknown error occured!');
-			setCheckAuthMessage(message);
+			if (isAxiosError(err)) {
+				if (err.response) {
+					setCheckAuthMessage(`Error: Status ${err.response.status} returned`);
+				} else {
+					setCheckAuthMessage('Error: No response returned.');
+				}
+			} else {
+				setCheckAuthMessage('Error: an unknown error occured!');
+			}
 		}
 		checkAuthPlaceholder = '';
 	}
 </script>
 
+<svelte:head>
+	<title>Test your Authentication</title>
+	<meta name="description" content="Svelte demo app" />
+</svelte:head>
 <div style={'display: flex; flex-direction: column; gap:10px'}>
-	<div class="section">
-		<button class="action" on:click={logIn} disabled={loginPlaceholder !== ''}>Log in</button>
-		<Temp
-			placeholder={loginPlaceholder}
-			duration={messageDuration}
-			bind:setMessage={setLoginMessage}
-			bind:clearMessage={clearLoginMessage}
-		/>
-	</div>
-
-	<div class="section">
-		<button class="action" on:click={logOut} disabled={logoutPlaceholder !== ''}>Log Out</button>
-		<Temp
-			placeholder={logoutPlaceholder}
-			duration={messageDuration}
-			bind:setMessage={setLogoutMessage}
-			bind:clearMessage={clearLogoutMessage}
-		/>
-	</div>
+	<h2>Authentication: {authenticated ? 'true' : 'false'}</h2>
+	{#if !authenticated}
+		<div class="section">
+			<button class="action" on:click={logIn} disabled={loginPlaceholder !== ''}>Log in</button>
+			<Temp
+				placeholder={loginPlaceholder}
+				duration={messageDuration}
+				bind:setMessage={setLoginMessage}
+				bind:clearMessage={clearLoginMessage}
+			/>
+		</div>
+	{:else}
+		<div class="section">
+			<button class="action" on:click={logOut} disabled={logoutPlaceholder !== ''}>Log Out</button>
+			<Temp
+				placeholder={logoutPlaceholder}
+				duration={messageDuration}
+				bind:setMessage={setLogoutMessage}
+				bind:clearMessage={clearLogoutMessage}
+			/>
+		</div>
+	{/if}
 
 	<div class="section">
 		<button class="action" on:click={checkAuth} disabled={checkAuthPlaceholder !== ''}
