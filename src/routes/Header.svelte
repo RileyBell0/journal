@@ -39,6 +39,9 @@
 				<li aria-current={$page.url.pathname === '/home' ? 'page' : undefined}>
 					<a href="/home">Home</a>
 				</li>
+				<li aria-current={$page.url.pathname === '/notes' ? 'page' : undefined}>
+					<a href="/notes">Notes</a>
+				</li>
 			{/if}
 			<li aria-current={$page.url.pathname.startsWith('/authtest') ? 'page' : undefined}>
 				<a href="/authtest">Auth</a>
