@@ -1,5 +1,13 @@
 <script lang="ts">
 	import Note from '../../../lib/Note.svelte';
+
+	// const default_title_format = {
+	// 	weekday: 'short',
+	// 	year: 'numeric',
+	// 	month: 'long',
+	// 	day: '2-digit'
+	// };
+	// new Date().toLocaleString(undefined, default_title_format);
 </script>
 
 <svelte:head>

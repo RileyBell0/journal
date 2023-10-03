@@ -1,27 +1,33 @@
 <script lang="ts">
 	import EditorJs, { type API, type BlockMutationEvent, type OutputData } from '@editorjs/editorjs';
 	import Header from '@editorjs/header';
+	// @ts-ignore
 	import Link from '@editorjs/link';
+	// @ts-ignore
 	import Checklist from '@editorjs/checklist';
+	// @ts-ignore
 	import Embed from '@editorjs/embed';
+	// @ts-ignore
 	import List from '@editorjs/list';
+	// @ts-ignore
 	import Raw from '@editorjs/raw';
+	// @ts-ignore
 	import SimpleImage from '@editorjs/simple-image';
-	import backend from '$lib/net/backend';
 	import { debounce } from 'ts-debounce';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	export const prerender = false;
 	import { count } from './stores';
+	import note from './note';
 
 	type NoteState = {
-		id: number;
+		id: null | number;
 		time: number;
 		content: OutputData;
 		title: string;
 	};
 
 	// Constants
-	const id = `note_${$count++}`;
+	const html_id = `note_${$count++}`;
 	const save_delay_ms = 500;
 	const save_note_debounced = debounce(save_note, save_delay_ms);
 	const date_format = {
@@ -32,28 +38,39 @@
 		minute: '2-digit',
 		hour12: true
 	};
-	const default_title_format = {
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: '2-digit'
-	};
+
+	onDestroy(() => {
+		save_note_debounced.cancel();
+		editor.destroy();
+	});
 
 	// For saving a note
 	export let placeholder: string = 'Enter text here';
-	export let initialise: NoteState | null = null;
-	let note_id: number | null = null;
-	let title: string =
-		initialise?.title ?? new Date().toLocaleString(undefined, default_title_format);
-	let last_edit = initialise?.time ?? 0;
-	let last_saved_edit = initialise?.time ?? 0;
+	export let state: NoteState = {
+		id: null,
+		time: 0,
+		content: { blocks: [], time: new Date().getUTCMilliseconds(), version: 'n/a' },
+		title: ''
+	} as NoteState;
+	export let id = state.id;
+	export let can_delete = state.id !== null;
+	$: {
+		can_delete = state.id !== null;
+	}
+	$: {
+		id = state.id;
+	}
+
+	export let onSave = (id: number, title: string) => {};
+
+	let last_edit = state?.time ?? 0;
 
 	// Needed for saving and initialising a new note
 	let being_created = false;
 
 	// Initialise the editor
 	let editor_options: any = {
-		holder: id,
+		holder: html_id,
 		placeholder: placeholder,
 		tools: {
 			header: Header,
@@ -66,30 +83,30 @@
 		},
 		minHeight: 0,
 		onChange: (api: API, event: BlockMutationEvent) => {
-			save_note_debounced();
+			save_note_debounced().catch(() => {});
 		}
 	};
-	if (initialise !== null) {
-		editor_options.data = initialise.content;
+	if (state !== null) {
+		editor_options.data = state.content;
 	}
 	const editor = new EditorJs(editor_options);
-
 	// Save
 	onMount(() => {
-		const editorContent = document.getElementById(id);
+		const editorContent = document.getElementById(html_id);
 		if (editorContent !== null) {
-			editorContent.addEventListener('input', () => {
-				save_note_debounced();
+			editorContent.addEventListener('input', async () => {
+				save_note_debounced().catch(() => {});
 			});
 		}
 	});
+
+	async function initialise() {}
+
 	async function save_note() {
-		// exit early (optimisation)
-		if (being_created) {
+		if (editor === undefined) {
 			return;
 		}
-
-		const data = await editor.save();
+		const content = await editor.save();
 
 		// in-between await blocks. Check if it's being created elsewhere
 		if (being_created) {
@@ -97,58 +114,51 @@
 		}
 
 		// Update the most recent saved edit
-		if (last_edit === data.time) {
+		if (last_edit === content.time) {
 			return;
 		}
-		last_edit = last_edit < (data.time ?? 0) ? data.time ?? 0 : last_edit;
+		last_edit = last_edit < (content.time ?? 0) ? content.time ?? 0 : last_edit;
 
 		// Save changes.
-		// If we haven't created the note yet, don't save anything, there's no need, it's got no content
-		const contents = JSON.stringify(data);
-		if (note_id === null && data.blocks.length > 0) {
+		if (state.id === null && (content.blocks.length > 0 || state.title.length > 0)) {
 			being_created = true;
-			// Create the note
-			let res = await backend.post('/notes', {
-				content: contents,
-				time: data.time ?? 0,
-				title: title
-			});
-			if (res.status === 201) {
-				note_id = res.data;
+			state.id = await note.create(state.title, content);
+			being_created = false;
 
-				// check if we skipped any updates while saving
-				being_created = false;
-				save_note_debounced();
+			if (state.id === null) {
+				alert('ERROR - failed to save note');
+			} else {
+				onSave(state.id, state.title);
+				save_note_debounced().catch(() => {});
 			}
-			last_saved_edit = (data.time ?? 0) > last_saved_edit ? data.time ?? 0 : last_saved_edit;
 
 			being_created = false;
-		} else if (note_id !== null) {
-			// TODO handle errors
-			await backend.post(`/notes/${note_id}`, {
-				content: contents,
-				time: data.time ?? 0,
-				title: title
-			});
-			last_saved_edit = (data.time ?? 0) > last_saved_edit ? data.time ?? 0 : last_saved_edit;
+		} else if (state.id !== null) {
+			await note.update(state.id, state.title, content);
+			onSave(state.id, state.title);
 		}
+
+		state.time = (content.time ?? 0) > state.time ? content.time ?? 0 : state.time;
 	}
 </script>
 
 <div>
 	<input
-		on:input={() => save_note_debounced()}
-		bind:value={title}
+		on:input={() => {
+			save_note_debounced().catch(() => {});
+		}}
+		bind:value={state.title}
 		type="text"
 		class="heading"
 		placeholder="Title"
 	/>
 	<p class="subtext">
-		Last Updated: {last_saved_edit === 0
+		Last Updated: {state.time === 0
 			? 'Uninitialised'
-			: new Date(last_saved_edit).toLocaleString(undefined, date_format)}
+			: // @ts-ignore
+			  new Date(state.time).toLocaleString(undefined, date_format)}
 	</p>
-	<div class="note" {id} />
+	<div class="note" id={html_id} />
 </div>
 
 <style>
