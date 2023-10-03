@@ -2,12 +2,18 @@
 	import Note from '$lib/Note.svelte';
 	import backend from '$lib/net/backend';
 	import type { OutputData } from '@editorjs/editorjs';
+	import { onMount } from 'svelte';
 
 	type Note = {
 		id: number;
 		content: OutputData;
 		time: number;
+		title: string;
 	};
+
+	onMount(() => {
+		load_all();
+	});
 
 	let notes: Note[] = [];
 
@@ -44,7 +50,7 @@
 	<meta name="description" content="Svelte demo app" />
 </svelte:head>
 
-<div>
+<!-- <div>
 	<h1>Notes</h1>
 	<p>TODO</p>
 	<ul>
@@ -67,13 +73,16 @@
 			hamburger next to the note's title?
 		</li>
 	</ul>
-</div>
-<button on:click={load_all}>Get all</button>
-{#each notes as note}
-	<div class="card">
-		<Note note_id={note.id} initial_state={note.content} />
+</div> -->
+{#if notes.length > 0}
+	<div class="holder">
+		{#each notes as note}
+			<div class="card">
+				<Note initialise={note} />
+			</div>
+		{/each}
 	</div>
-{/each}
+{/if}
 
 <div />
 
@@ -87,5 +96,11 @@
 		box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
 		margin-left: auto;
 		margin-right: auto;
+	}
+	.holder {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+		padding: 20px;
 	}
 </style>

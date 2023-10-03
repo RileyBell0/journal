@@ -13,18 +13,45 @@
 	export const prerender = false;
 	import { count } from './stores';
 
+	type NoteState = {
+		id: number;
+		time: number;
+		content: OutputData;
+		title: string;
+	};
+
 	// Constants
 	const id = `note_${$count++}`;
 	const save_delay_ms = 500;
 	const save_note_debounced = debounce(save_note, save_delay_ms);
+	const date_format = {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: true
+	};
+	const default_title_format = {
+		weekday: 'long',
+		year: 'numeric',
+		month: 'long',
+		day: '2-digit'
+	};
 
 	// For saving a note
-	export let note_id: number | null = null;
-	export let initial_state: OutputData | null = null;
 	export let placeholder: string = 'Enter text here';
+	export let initialise: NoteState | null = null;
+	let note_id: number | null = null;
+	let title: string =
+		initialise?.title ?? new Date().toLocaleString(undefined, default_title_format);
+	let last_edit = initialise?.time ?? 0;
+	let last_saved_edit = initialise?.time ?? 0;
 
+	// Needed for saving and initialising a new note
 	let being_created = false;
-	let last_edit = 0;
+
+	// Initialise the editor
 	let editor_options: any = {
 		holder: id,
 		placeholder: placeholder,
@@ -37,12 +64,13 @@
 			raw: Raw,
 			simple_image: SimpleImage
 		},
+		minHeight: 0,
 		onChange: (api: API, event: BlockMutationEvent) => {
 			save_note_debounced();
 		}
 	};
-	if (initial_state !== null) {
-		editor_options.data = initial_state;
+	if (initialise !== null) {
+		editor_options.data = initialise.content;
 	}
 	const editor = new EditorJs(editor_options);
 
@@ -80,7 +108,11 @@
 		if (note_id === null && data.blocks.length > 0) {
 			being_created = true;
 			// Create the note
-			let res = await backend.post('/notes', { content: contents, time: data.time ?? 0 });
+			let res = await backend.post('/notes', {
+				content: contents,
+				time: data.time ?? 0,
+				title: title
+			});
 			if (res.status === 201) {
 				note_id = res.data;
 
@@ -88,22 +120,57 @@
 				being_created = false;
 				save_note_debounced();
 			}
+			last_saved_edit = (data.time ?? 0) > last_saved_edit ? data.time ?? 0 : last_saved_edit;
 
 			being_created = false;
 		} else if (note_id !== null) {
 			// TODO handle errors
 			await backend.post(`/notes/${note_id}`, {
 				content: contents,
-				time: data.time ?? 0
+				time: data.time ?? 0,
+				title: title
 			});
+			last_saved_edit = (data.time ?? 0) > last_saved_edit ? data.time ?? 0 : last_saved_edit;
 		}
 	}
 </script>
 
-<div class="note" {id} />
+<div>
+	<input
+		on:input={() => save_note_debounced()}
+		bind:value={title}
+		type="text"
+		class="heading"
+		placeholder="Title"
+	/>
+	<p class="subtext">
+		Last Updated: {last_saved_edit === 0
+			? 'Uninitialised'
+			: new Date(last_saved_edit).toLocaleString(undefined, date_format)}
+	</p>
+	<div class="note" {id} />
+</div>
 
 <style>
 	.note {
 		width: 100%;
+		padding: 0px;
+	}
+	.subtext {
+		opacity: 0.8;
+	}
+	.heading {
+		border: none;
+		outline: none;
+		display: block;
+		font-size: 1.5em;
+		margin-block-start: 0.83em;
+		margin-block-end: 0.83em;
+		margin-inline-start: 0px;
+		margin-inline-end: 0px;
+		font-weight: bold;
+		padding: 0px;
+		width: 100%;
+		border-bottom: 1px solid #ccc;
 	}
 </style>
