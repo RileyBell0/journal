@@ -4,6 +4,7 @@ import backend from "./net/backend";
 type NoteOverview = {
     id: number;
     title: string;
+    update_time: number
 };
 
 type Note = {
