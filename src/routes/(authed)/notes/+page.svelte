@@ -49,7 +49,10 @@
     onMount(async () => {
         // TODO store notes in a store or something, that way each note is responsible for updating its own state, other places just read that (other places such as here)
         notes = (await note.fetch_all()) ?? [];
-        await select_note(Number($page.url.searchParams.get('selected')) ?? null);
+        let selected = $page.url.searchParams.get('selected');
+        if (selected !== null) {
+            await select_note(Number(selected));
+        }
         loading = false;
     });
 
@@ -170,7 +173,11 @@
         } else {
             $page.url.searchParams.set('selected', note_id.toString());
             history.replaceState(history.state, '', $page.url);
-            selected_note = await note.fetch_one(note_id);
+            try {
+                selected_note = await note.fetch_one(note_id);
+            } catch (e) {
+                selected_note = null;
+            }
         }
     }
 </script>
