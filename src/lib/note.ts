@@ -5,6 +5,7 @@ type NoteOverview = {
     id: number;
     title: string;
     update_time: number
+    favourite: boolean;
 };
 
 type Note = {
@@ -12,6 +13,7 @@ type Note = {
     content: OutputData;
     time: number;
     title: string;
+    favourite: boolean;
 };
 
 async function create(title: string, content: OutputData): Promise<number | null> {
@@ -21,7 +23,8 @@ async function create(title: string, content: OutputData): Promise<number | null
     let res = await backend.post('/notes', {
         content: contents,
         time: content.time ?? 0,
-        title: title
+        title: title,
+        favourite: false
     });
 
     if (res.status === 201) {
@@ -31,13 +34,20 @@ async function create(title: string, content: OutputData): Promise<number | null
     return null;
 }
 
-async function update(id: number, title: string, content: OutputData) {
+async function set_favourite(id: number, favourite: boolean) {
+    return await backend.post(`/notes/${id}/favourite`, {
+        favourite: favourite
+    });
+}
+
+async function update(id: number, title: string, content: OutputData, favourite: boolean) {
     const contents = JSON.stringify(content);
 
     await backend.post(`/notes/${id}`, {
         content: contents,
         time: content.time ?? 0,
-        title: title
+        title: title,
+        favourite: favourite
     });
 }
 
@@ -71,4 +81,4 @@ async function delete_one(id: number): Promise<boolean> {
     return true;
 }
 
-export default { create, update, fetch_all, fetch_one, delete_one }
+export default { create, update, fetch_all, fetch_one, delete_one, set_favourite }

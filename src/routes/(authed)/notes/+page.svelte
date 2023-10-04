@@ -34,12 +34,14 @@
         content: OutputData;
         time: number;
         title: string;
+        favourite: boolean;
     };
 
     type NoteOverview = {
         id: number;
         title: string;
         update_time: number;
+        favourite: boolean;
     };
 
     let loading = $page.url.searchParams.get('selected') !== undefined;
@@ -73,6 +75,14 @@
      */
     function sort(notes: NoteOverview[]): NoteOverview[] {
         return notes.sort((a, b) => {
+            if (a.favourite && !b.favourite) {
+                return -1;
+            }
+
+            if (b.favourite && !a.favourite) {
+                return 1;
+            }
+
             if (a.update_time < b.update_time) {
                 return 1;
             }
@@ -98,14 +108,32 @@
      * here accordingly - getting new notes included in the list of notes, and
      * updating the titles of existing notes
      */
-    function updateNoteOverview(id: number, title: string, update_time: number): void {
+    function updateNoteOverview(
+        id: number,
+        title: string,
+        update_time: number,
+        favourite: boolean
+    ): void {
         let index = notes.findIndex((note) => note.id === id);
-        let new_note = { id, title, update_time };
+        let new_note = { id, title, update_time, favourite };
         if (index === -1) {
             notes = [...notes, new_note];
         } else {
             notes[index] = new_note;
         }
+    }
+
+    function setFavourite(id: number, favourite: boolean) {
+        note.set_favourite(id, favourite);
+
+        let index = notes.findIndex((note) => note.id === id);
+        if (index === -1) {
+            return;
+        }
+
+        let new_note = notes[index];
+        new_note.favourite = favourite;
+        notes[index] = new_note;
     }
 
     /**
@@ -163,24 +191,44 @@
         <div class="holder" transition:fade={{ duration: 300 }}>
             <div class="note-menu drop-shadow-md">
                 {#if filtered_notes.length > 0}
-                    {#each filtered_notes as note}
+                    {#each filtered_notes as curr_note}
                         <Button
                             on:click={() => {
-                                select_note(note.id);
+                                select_note(curr_note.id);
                             }}
                             class="note-overview bg-stone-200 text-stone-900"
                         >
-                            <div>
+                            <div class="note-overview-container">
                                 <div class="note-overview">
-                                    <h3 class="note-overview-title">{note.title}</h3>
+                                    <h3 class="note-overview-title">{curr_note.title}</h3>
                                     <p class="opacity-70">
-                                        {new Date(note.update_time).toLocaleString(
+                                        {new Date(curr_note.update_time).toLocaleString(
                                             undefined,
                                             date_format
                                         )}
                                     </p>
                                 </div>
-                                <BookmarkMarked />
+                                <div class="note-overview-bookmark">
+                                    {#if curr_note.favourite}
+                                        <button
+                                            on:click|stopPropagation={() => {
+                                                setFavourite(curr_note.id, false);
+                                            }}
+                                            class="bookmark"
+                                        >
+                                            <BookmarkMarked />
+                                        </button>
+                                    {:else}
+                                        <button
+                                            on:click|stopPropagation={() => {
+                                                setFavourite(curr_note.id, true);
+                                            }}
+                                            class="bookmark"
+                                        >
+                                            <BookmarkUnmarked />
+                                        </button>
+                                    {/if}
+                                </div>
                             </div>
                         </Button>
                     {/each}
@@ -264,16 +312,39 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+        overflow: hidden;
+        width: 100%;
+    }
+    .note-overview-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        flex-wrap: nowrap;
         width: 100%;
     }
     .note-overview-title {
         text-align: left;
-        width: 100%;
         font-weight: normal;
         margin: 0px;
+        width: 100%;
+
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+        flex-grow: 1;
+    }
+    .note-overview-bookmark {
+        width: 20px;
+        margin: auto;
+        margin-left: 10px;
+    }
+    .bookmark {
+        padding: 4px 2px;
+    }
+    .bookmark:hover {
+        background-color: rgba(255, 255, 255, 0.5);
+        box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
     }
     .section-header {
         display: flex;

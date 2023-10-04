@@ -28,6 +28,7 @@
         time: number;
         content: OutputData;
         title: string;
+        favourite: boolean;
     };
 
     // Constants
@@ -49,7 +50,8 @@
         id: null,
         time: 0,
         content: { blocks: [], time: new Date().getUTCMilliseconds(), version: 'n/a' },
-        title: ''
+        title: '',
+        favourite: false
     } as NoteState;
     export let id = state.id;
     export let can_delete = state.id !== null;
@@ -60,7 +62,12 @@
         id = state.id;
     }
 
-    export let onSave = (id: number, title: string, update_time: number) => {};
+    export function setFavourite(favourite: boolean) {
+        state.favourite = favourite;
+        save_note_debounced();
+    }
+
+    export let onSave = (id: number, title: string, update_time: number, favourite: boolean) => {};
 
     let last_edit = state?.time ?? 0;
 
@@ -107,8 +114,6 @@
         }
     });
 
-    async function initialise() {}
-
     async function save_note() {
         if (editor === undefined) {
             return;
@@ -136,14 +141,14 @@
             if (state.id === null) {
                 alert('ERROR - failed to save note');
             } else {
-                onSave(state.id, state.title, update_time);
+                onSave(state.id, state.title, update_time, state.favourite);
                 save_note_debounced().catch(() => {});
             }
 
             being_created = false;
         } else if (state.id !== null) {
-            await note.update(state.id, state.title, content);
-            onSave(state.id, state.title, update_time);
+            await note.update(state.id, state.title, content, state.favourite);
+            onSave(state.id, state.title, update_time, state.favourite);
         }
 
         state.time = update_time;
