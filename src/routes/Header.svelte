@@ -3,7 +3,7 @@
     import logo from '$lib/images/svelte-logo.svg';
     import profile_none from '$lib/images/profile_none.jpg';
     import profile_default from '$lib/images/dog.jpeg';
-    import backend from '$lib/net/backend';
+    import { backend } from '$lib/net/backend';
     import { goto } from '$app/navigation';
     import { clickOutside } from 'svelte-use-click-outside';
 
