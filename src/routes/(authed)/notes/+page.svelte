@@ -261,59 +261,42 @@
     <div class="holder" transition:fade={{ duration: 300 }} class:hidden={loading}>
         <!-- The note overview list / note selector / sidebar -->
         <div class="note-menu drop-shadow-md">
-            {#each filtered_notes as curr_note (curr_note.id)}
-                <div class="buttoncont" animate:flip={{ duration: 600, easing: quintOut }}>
-                    <Button
-                        on:click={() => {
-                            select_note(curr_note.id);
-                        }}
-                        class="note-overview bg-stone-200 text-stone-900 w-full"
-                    >
-                        <div
-                            class="note-overview-container"
-                            class:selected={selectedID === curr_note.id}
+            {#each filtered_notes as note (note.id)}
+                <button
+                    animate:flip={{ duration: 600, easing: quintOut }}
+                    on:click={() => {
+                        select_note(note.id);
+                    }}
+                    class="note-overview-container bg-stone-200 text-stone-900 w-full"
+                    class:selected={selectedID === note.id}
+                >
+                    <!-- overview / text section -->
+                    <div class="note-overview">
+                        <h3
+                            class="note-overview-title"
+                            class:note-overview-title-missing={note.title.length === 0}
                         >
-                            <div class="note-overview">
-                                {#if curr_note.title.length > 0}
-                                    <h3 class="note-overview-title">
-                                        {curr_note.title}
-                                    </h3>
-                                {:else}
-                                    <h3 class="note-overview-title note-overview-title-missing">
-                                        Untitled
-                                    </h3>
-                                {/if}
-                                <p class="opacity-70">
-                                    {new Date(curr_note.update_time).toLocaleString(
-                                        undefined,
-                                        DATE_FORMAT
-                                    )}
-                                </p>
-                            </div>
-                            <div class="note-overview-bookmark">
-                                {#if curr_note.favourite}
-                                    <button
-                                        on:click|stopPropagation={() => {
-                                            // set_favourite(curr_note.id, false);
-                                        }}
-                                        class="bookmark"
-                                    >
-                                        <BookmarkMarked />
-                                    </button>
-                                {:else}
-                                    <button
-                                        on:click|stopPropagation={() => {
-                                            // set_favourite(curr_note.id, true);
-                                        }}
-                                        class="bookmark"
-                                    >
-                                        <BookmarkUnmarked />
-                                    </button>
-                                {/if}
-                            </div>
-                        </div>
-                    </Button>
-                </div>
+                            {note.title !== '' ? note.title : 'Untitled'}
+                        </h3>
+                        <p class="opacity-70">
+                            {new Date(note.update_time).toLocaleString(undefined, DATE_FORMAT)}
+                        </p>
+                    </div>
+
+                    <!-- Favourite Button toggle -->
+                    <button
+                        on:click|stopPropagation={() => {
+                            Notes.update(note.id, { favourite: !note.favourite });
+                        }}
+                        class="bookmark"
+                    >
+                        {#if note.favourite}
+                            <BookmarkMarked />
+                        {:else}
+                            <BookmarkUnmarked />
+                        {/if}
+                    </button>
+                </button>
             {/each}
             <p class:hidden={filtered_notes.length > 0}>No notes found</p>
         </div>
