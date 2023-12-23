@@ -44,9 +44,26 @@ type NoteInfo = {
  * or publish to these when editing notes.
  */
 class Notes {
-    private static readonly requests = new RequestHandler<any>();
-    private static readonly notes: Writable<{ [key: number]: Writable<Note> }> = writable({});
-    private static readonly note_overviews: Writable<{ [key: number]: Writable<NoteOverview> }> = writable({});
+    private static readonly requests = new RequestHandler();
+    public static readonly notes: Writable<{ [key: number]: Writable<Note> }> = writable({});
+    public static readonly note_overviews: Writable<{ [key: number]: Writable<NoteOverview> }> = writable({});
+
+    /**
+     * Convert a Note into a NoteInfo, grabbing the data out of it and flattening
+     * it into an easy to use struct
+     * 
+     * @param note the note you're wanting to flatten the info of
+     * @returns The flattened info of the note (extracts data from the nested stores)
+     */
+    public static toNoteInfo(note: Writable<Note>): NoteInfo {
+        const content = get(note).content;
+        const overview = get(get(note).overview);
+
+        return {
+            content,
+            ...overview,
+        } as NoteInfo;
+    }
 
     /**
      * Creates a new note in the backend with the given content and returns the
@@ -157,11 +174,14 @@ class Notes {
         }
 
         // Apply the update
+        let update_time: number;
         try {
             const res = await backend.patch(`/notes/${id}`, update);
             if (res.status !== 200) {
                 return false;
             }
+
+            update_time = res.data.update_time;
         } catch (e) {
             return false;
         }
@@ -175,15 +195,14 @@ class Notes {
             }
 
             // Then update its overview
-            if (update.favourite !== undefined || update.title !== undefined) {
-                const overview_store = get(note_store).overview;
-                const overview = get(overview_store);
-                overview_store.set({
-                    ...get(overview_store),
-                    favourite: overview.favourite ?? update.favourite,
-                    title: overview.title ?? update.title
-                })
-            }
+            const overview_store = get(note_store).overview;
+            const overview = get(overview_store);
+            overview_store.set({
+                ...overview,
+                favourite: update.favourite ?? overview.favourite,
+                title: update.title ?? overview.title,
+                update_time
+            })
 
             this.notes.set(get(this.notes));
         }
@@ -392,4 +411,4 @@ class Notes {
     }
 }
 
-export { Notes, type Note, type NoteOverview };
+export { Notes, type Note, type NoteOverview, type NoteInfo, type NoteUpdatePackage };
