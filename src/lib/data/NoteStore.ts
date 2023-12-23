@@ -173,7 +173,7 @@ class Notes {
             return true;
         }
 
-        // Apply the update
+        // Apply the update in the backend
         let update_time: number;
         try {
             const res = await backend.patch(`/notes/${id}`, update);
@@ -186,18 +186,19 @@ class Notes {
             return false;
         }
 
-        // Also apply the update locally
+        // Update the note
         const note_store = get(this.notes)[id];
         if (note_store !== undefined) {
-            // Update the note
             if (update.content !== undefined) {
                 note_store.set({ ...get(note_store), content: JSON.parse(update.content) });
             }
+        }
 
-            // Then update its overview
-            const overview_store = get(note_store).overview;
-            const overview = get(overview_store);
-            overview_store.set({
+        // Then update its overview
+        const overviewStore = get(this.note_overviews)[id];
+        if (overviewStore !== undefined) {
+            const overview = get(overviewStore);
+            overviewStore.set({
                 ...overview,
                 favourite: update.favourite ?? overview.favourite,
                 title: update.title ?? overview.title,
