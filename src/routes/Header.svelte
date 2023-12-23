@@ -1,26 +1,27 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import logo from '$lib/images/svelte-logo.svg';
-    import profile_none from '$lib/images/profile_none.jpg';
-    import profile_default from '$lib/images/dog.jpeg';
+    import profile_none from '$lib/images/profile_none.png';
     import { backend } from '$lib/net/backend';
     import { goto } from '$app/navigation';
     import { clickOutside } from 'svelte-use-click-outside';
 
-    let profile_visible = false;
-    function toggle_profile_visibility() {
-        profile_visible = !profile_visible;
-    }
-
     export let authenticated: boolean;
 
-    async function signout() {
+    let profile_visible = false;
+
+    /**
+     * Signs the user out and redirects them to the home page
+     */
+    const signout = async () => {
+        authenticated = false;
+
         try {
             await backend.post('/auth/logout');
-        } finally {
-            goto('/');
-        }
-    }
+        } catch (e) {}
+
+        goto('/');
+    };
 </script>
 
 <header>
@@ -56,184 +57,188 @@
     </nav>
 
     <div class="corner">
-        <button on:click={toggle_profile_visibility}>
-            <img
-                class="profile_img"
-                src={authenticated ? profile_default : profile_none}
-                alt="Profile"
-            />
-        </button>
-        <div
-            class="profile_dropdown"
-            class:hidden={!profile_visible}
-            use:clickOutside={() => {
-                if (profile_visible) {
-                    toggle_profile_visibility();
-                }
+        <button
+            on:click={() => {
+                profile_visible = !profile_visible;
             }}
+            use:clickOutside={() => {
+                profile_visible = false;
+            }}
+            class="profile"
         >
-            <p><a href="/login">Login</a></p>
-            <button on:click={signout}>Sign Out</button>
-        </div>
+            <img class="profile_pic" src={profile_none} alt="Profile" />
+            <div class="dropdown" class:hidden={!profile_visible}>
+                <a href="/login">Login</a>
+                <button on:click={signout}>Sign Out</button>
+            </div>
+        </button>
     </div>
 </header>
 
-<style>
+<style lang="less">
     header {
         display: flex;
         justify-content: space-between;
-    }
 
-    .hidden {
-        display: none !important;
-    }
+        .hidden {
+            display: none !important;
+        }
 
-    .corner {
-        position: relative;
-        display: inline-block;
-        width: 3em;
-        height: 3em;
-    }
+        // A corner of the header
+        .corner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
 
-    .profile_dropdown {
-        display: flex;
-        gap: 10px;
-        flex-direction: column;
-        justify-content: left;
-        align-items: flex-start;
-        background-color: #f1f1f1;
-        margin: 0px;
-        right: 0;
-        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-        overflow: auto;
-        float: right;
-        padding: 15px;
-        width: 200px;
-        max-width: 200px;
-        padding-bottom: 25px;
-        border-top-left-radius: 5px;
-        border-bottom-left-radius: 5px;
-    }
+            width: 3em;
+            height: 3em;
 
-    .profile_dropdown > button,
-    p {
-        width: 100%;
-        padding: 8px;
+            // Svelte logo
+            .logo {
+                display: flex;
+                align-items: center;
+                justify-content: center;
 
-        text-align: left;
-        color: #ff3e00;
+                width: 2em;
+                height: 2em;
+            }
+        }
 
-        border-radius: 5px;
-        border: 1px solid gainsboro;
+        // The profile image and its dropdown
+        .profile {
+            @profile-height: 32px;
+            @profile-border-radius: 5px;
+            @profile-border-width: 1px;
 
-        box-sizing: border-box;
-    }
+            position: relative;
 
-    .profile_dropdown > button:hover {
-        text-decoration: underline;
-    }
+            height: @profile-height;
+            width: 32px;
 
-    .profile_dropdown a:hover {
-        cursor: pointer;
-    }
+            box-sizing: border-box;
+            background-color: white;
+            border: @profile-border-width solid #ff3e00;
+            border-radius: @profile-border-radius;
 
-    button {
-        background: none;
-        border: none;
-        outline: inherit;
-        cursor: pointer;
-        padding: 0;
-        color: inherit;
-    }
+            .profile_pic {
+                object-fit: cover;
+                box-sizing: border-box;
+                width: 100%;
+                height: 100%;
+                border-radius: @profile-border-radius - @profile-border-width;
+            }
 
-    .corner > button {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+            .dropdown {
+                position: absolute;
+                top: @profile-height;
+                right: 0px;
 
-    .logo {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-    }
+                display: flex;
+                flex-direction: column;
 
-    .profile_img {
-        border-radius: 50%;
-        outline: 2px solid #ff3e00;
-    }
+                width: 200px;
+                max-width: 200px;
 
-    .corner img {
-        width: 2em;
-        height: 2em;
-        object-fit: cover;
-    }
+                padding: 15px 0px;
 
-    nav {
-        display: flex;
-        justify-content: center;
-        --background: rgba(255, 255, 255, 0.7);
-    }
+                background-color: #f1f1f1;
+                border-radius: 5px;
+                box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
 
-    svg {
-        width: 2em;
-        height: 3em;
-        display: block;
-    }
+                & > a,
+                & > button {
+                    display: flex;
+                    justify-content: left;
+                    align-items: center;
 
-    path {
-        fill: var(--background);
-    }
+                    width: 100%;
+                    height: 32px;
 
-    ul {
-        position: relative;
-        padding: 0;
-        margin: 0;
-        height: 3em;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        list-style: none;
-        background: var(--background);
-        background-size: contain;
-    }
+                    color: #ff3e00;
+                    text-align: left;
 
-    li {
-        position: relative;
-        height: 100%;
-    }
+                    cursor: pointer;
+                    padding: 16px;
 
-    li[aria-current='page']::before {
-        --size: 6px;
-        content: '';
-        width: 0;
-        height: 0;
-        position: absolute;
-        top: 0;
-        left: calc(50% - var(--size));
-        border: var(--size) solid transparent;
-        border-top: var(--size) solid var(--color-theme-1);
-    }
+                    &:hover {
+                        text-decoration: none;
+                        background-color: #ffdfd4;
+                    }
+                }
+            }
+        }
 
-    nav a {
-        display: flex;
-        height: 100%;
-        align-items: center;
-        padding: 0 0.5rem;
-        color: var(--color-text);
-        font-weight: 700;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        text-decoration: none;
-        transition: color 0.2s linear;
-    }
+        // Top middle nav bar
+        nav {
+            display: flex;
+            justify-content: center;
+            --background: rgba(255, 255, 255, 0.7);
 
-    a:hover {
-        color: var(--color-theme-1);
+            // Angled edges of the middle nav
+            svg {
+                width: 2em;
+                height: 3em;
+                display: block;
+
+                path {
+                    fill: var(--background);
+                }
+            }
+        }
+
+        // the list of options in the nav
+        ul {
+            padding: 0;
+            margin: 0;
+            height: 3em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            list-style: none;
+            background: var(--background);
+            background-size: contain;
+
+            // An individual nav option
+            li {
+                position: relative;
+                height: 100%;
+
+                // Chuck a lil red arrow on the currently loaded page
+                &[aria-current='page']::before {
+                    content: '';
+                    @size: 6px;
+
+                    width: 0;
+                    height: 0;
+                    position: absolute;
+                    top: 0;
+                    left: calc(50% - @size);
+                    border: @size solid transparent;
+                    border-top: @size solid var(--color-theme-1);
+                }
+
+                a {
+                    display: flex;
+                    align-items: center;
+
+                    height: 100%;
+                    padding: 0 0.5rem;
+
+                    color: var(--color-text);
+
+                    font-weight: 700;
+                    font-size: 0.8rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                    text-decoration: none;
+
+                    transition: color 0.2s linear;
+
+                    &:hover {
+                        color: var(--color-theme-1);
+                    }
+                }
+            }
+        }
     }
 </style>

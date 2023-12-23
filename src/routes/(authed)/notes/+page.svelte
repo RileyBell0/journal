@@ -1,30 +1,26 @@
 <script lang="ts">
     // when deleting a note it should select the one directly above it
-    import Note from '$lib/Note.svelte';
+    import Notepad from '$lib/components/Note/Note.svelte';
     import { onDestroy, onMount } from 'svelte';
     import { Button, Search } from 'flowbite-svelte';
-    import {
-        delete_one,
-        fetch_all,
-        fetch_one,
-        overview,
-        type Note,
-        type NoteOverview,
-        set_favourite
-    } from '$lib/NoteStore';
+    import type { Note, NoteInfo, NoteOverview } from '$lib/data/NoteStore';
+    import { Notes } from '$lib/data/NoteStore';
+
+    // Temporary icons
     // @ts-ignore
     import CirclePlusSolid from 'flowbite-svelte-icons/CirclePlusSolid.svelte';
     // @ts-ignore
     import BookmarkUnmarked from 'flowbite-svelte-icons/BookmarkOutline.svelte';
     // @ts-ignore
     import BookmarkMarked from 'flowbite-svelte-icons/BookmarkSolid.svelte';
+
     import { page } from '$app/stores';
-    import { fade, fly } from 'svelte/transition';
+    import { fade } from 'svelte/transition';
     import { get, type Unsubscriber, type Writable } from 'svelte/store';
     import { flip } from 'svelte/animate';
     import { quintOut } from 'svelte/easing';
 
-    const date_format: Intl.DateTimeFormatOptions = {
+    const DATE_FORMAT: Intl.DateTimeFormatOptions = {
         year: 'numeric',
         month: 'numeric',
         day: 'numeric',
@@ -34,99 +30,54 @@
     };
     const NOTE_ID_QUERY_PARAM = 'id';
 
+    // Show loading page if we're to load a page on startup
     let loading = $page.url.searchParams.get(NOTE_ID_QUERY_PARAM) !== undefined;
-    let search_term = '';
-    let can_delete = false;
-    let selected_note: Writable<Note> | null = null;
-    let selected_note_id: number =
+
+    // Selected note information
+    let selectedNote: Writable<Note> | null = null;
+    let selectedID: number =
         $page.url.searchParams.get(NOTE_ID_QUERY_PARAM) !== null
             ? Number($page.url.searchParams.get(NOTE_ID_QUERY_PARAM))
             : -1;
-    let new_note_reset = 0; // changing this value refreshes the new note
-    let note_overviews: Record<number, NoteOverview> = {};
-    let note_overviews_unsub: Record<number, Unsubscriber> = {};
-    let overview_unsub = () => {};
+    let boundNote: NoteInfo;
 
-    // Note list
-    $: filtered_notes = filter(note_overviews, search_term);
-    $: {
-        // Keep the selected_note_id up to date and stored within the URL
-        if (selected_note_id < 0) {
-            $page.url.searchParams.delete(NOTE_ID_QUERY_PARAM);
-        } else {
-            $page.url.searchParams.set(NOTE_ID_QUERY_PARAM, selected_note_id.toString());
-        }
-        history.replaceState(history.state, '', $page.url);
-    }
+    // Filter vars
+    let search_term = '';
 
-    // Load in initial data
-    onMount(async () => {
-        await fetch_all();
+    // Ovetviews
+    let note_overviews: { [id: number]: NoteOverview } = {};
 
-        // for all loaded notes
-        overview_unsub = overview.subscribe((event) => {
-            const current_ids = new Set(Object.keys(note_overviews));
-            const new_ids = new Set(Object.keys(event));
+    // The overview store unsubscribe methods for cleanup / deletion
+    let overviewsOverallUnsub: Unsubscriber | null = null;
+    let overviewsUnsub: { [id: number]: Unsubscriber } = {};
 
-            const deleted_keys = [...current_ids].filter((key) => !new_ids.has(key));
-            const added_keys = [...new_ids].filter((key) => !current_ids.has(key));
-
-            // unsubscribe from each of the stores of the removed notes
-            deleted_keys.forEach((elem) => {
-                const id = Number(elem);
-                const unsub = note_overviews_unsub[id];
-                if (unsub !== undefined) {
-                    unsub();
-                    delete note_overviews_unsub[id];
-                    if (note_overviews[id] !== undefined) {
-                        delete note_overviews[id];
-                        note_overviews = note_overviews;
-                    }
-                }
-            });
-
-            // subscrive to each of the new stores of loaded notes
-            added_keys.forEach((elem) => {
-                const id = Number(elem);
-                note_overviews_unsub[id] = event[id].subscribe((data) => {
-                    note_overviews[id] = data;
-                });
-            });
-        });
-
-        // Try and select the note specifided in the URL
-        const selected = $page.url.searchParams.get(NOTE_ID_QUERY_PARAM);
-        if (selected !== undefined) {
-            await select_note(Number(selected));
-        }
-
-        loading = false;
-    });
-    onDestroy(() => {
-        overview_unsub();
-        Object.values(note_overviews_unsub).forEach((unsub) => {
-            unsub();
-        });
-    });
-
+    let noteChange = false;
     /**
-     * Keeps only notes with titles that contain search_term (case insensitive)
+     * Selects the given note and displays it for editing
+     *
+     * @param note_id null to open a new note, an ID to open the note with that ID
      */
-    function filter(notes: Record<number, NoteOverview>, search_term: string): NoteOverview[] {
-        let term = search_term.toLocaleLowerCase();
+    const select_note = async (note_id: number | null) => {
+        if (note_id === null) {
+            // If null was received, the note to be selected is a *new* blank note
+            selectedNote = null;
+            selectedID = -1;
+        } else {
+            // Select the note with the given ID
+            selectedNote = await Notes.get(note_id);
+            selectedID = selectedNote === null ? -1 : get(get(selectedNote).overview).id;
+        }
 
-        let overviews: NoteOverview[] = [];
-        Object.values(notes).forEach((entry) => {
-            overviews.push(entry);
-        });
-        let filtered = overviews.filter((elem) => elem.title.toLocaleLowerCase().includes(term));
-        return sort(filtered);
-    }
+        noteChange = !noteChange;
+    };
 
     /**
      * Applies the requested sort to the note overviews (for now we'll use hardcoded defaults)
+     *
+     * @param notes the notes we're sorting
+     * @return the same notes sorted - sorted by (in order of precedence) Favourite (true first), Update time most recent first, ID (lower first)
      */
-    function sort(notes: NoteOverview[]): NoteOverview[] {
+    const sort_overviews = (notes: NoteOverview[]): NoteOverview[] => {
         return notes.sort((a, b) => {
             if (a.favourite && !b.favourite) {
                 return -1;
@@ -154,22 +105,36 @@
 
             return 0;
         });
-    }
+    };
 
     /**
-     * Deletes the currently selected note
+     * Keeps only notes with titles that contain search_term (case insensitive)
+     *
+     * @param overviews the note overviews we're applying our filter to
+     * @param search_term the string we're searching the titles for
      */
-    async function delete_note() {
-        if (selected_note_id < 0) {
+    const filter_overviews = (overviews: NoteOverview[], search_term: string): NoteOverview[] => {
+        search_term = search_term.toLocaleLowerCase();
+
+        return overviews.filter((elem) => elem.title.toLocaleLowerCase().includes(search_term));
+    };
+
+    /**
+     * Deletes the currently selected note, and opens a new note
+     */
+    const delete_note = async () => {
+        // We can't delete unsaved notes
+        if (selectedID < 0) {
             return;
         }
 
-        if (!(await delete_one(selected_note_id))) {
+        // Delete the note
+        if (!(await Notes.delete(selectedID))) {
             alert('Failed to delete note!');
             return;
         }
 
-        if (note_overviews[selected_note_id] !== undefined) {
+        if (note_overviews[selectedID] !== undefined) {
             let new_note_overviews: Record<number, NoteOverview> = {};
             for (let key in note_overviews) {
                 new_note_overviews[key] = note_overviews[key];
@@ -177,27 +142,105 @@
             note_overviews = new_note_overviews;
         }
         select_note(null);
+    };
+
+    /**
+     * Store the id of the selected note in the URL
+     */
+    $: {
+        // Keep the selectedID up to date and stored within the URL
+        if (selectedID < 0) {
+            $page.url.searchParams.delete(NOTE_ID_QUERY_PARAM);
+        } else {
+            $page.url.searchParams.set(NOTE_ID_QUERY_PARAM, selectedID.toString());
+        }
+        history.replaceState(history.state, '', $page.url);
     }
 
     /**
-     * Selects the given note and displays it for editing
+     * Apply the filter to our overviews
      */
-    async function select_note(note_id: number | null) {
-        if (note_id === null) {
-            can_delete = false;
-            selected_note = null;
-            selected_note_id = -1;
-            new_note_reset++;
-        } else {
+    $: filtered_notes = sort_overviews(
+        filter_overviews(Object.values(note_overviews), search_term)
+    );
+
+    onDestroy(() => {
+        // Unsub from remaining overviews themselves
+        Object.values(overviewsUnsub).forEach((unsub) => {
+            unsub();
+        });
+
+        // Unsub from checking when the existence of overviews themselves change
+        if (overviewsOverallUnsub !== null) {
+            overviewsOverallUnsub();
+        }
+    });
+
+    // Load in our initial state
+    onMount(async () => {
+        // Grab a bunch of notes. These'll get stored in Notes.note_overviews
+        const result = await Notes.get_overview_many();
+        if (result === null) {
+            alert('Failed to load notes');
+            return;
+        }
+
+        /**
+         * Keep up to date with WHAT overviews even exist
+         *
+         * (run when the existence of overviews changes)
+         */
+        overviewsOverallUnsub = Notes.note_overviews.subscribe((new_overviews) => {
+            // Figure out what's changed
+            const deletedOverviewIDs = Object.keys(note_overviews)
+                .map((id) => Number(id))
+                .filter((id) => !new_overviews.hasOwnProperty(id));
+            const newOverviewIDs = Object.keys(new_overviews)
+                .map((id) => Number(id))
+                .filter((id) => !note_overviews.hasOwnProperty(id));
+
+            // unsubscribe from each of the stores of the removed notes
+            for (const id of deletedOverviewIDs) {
+                if (overviewsUnsub[id] !== undefined) {
+                    overviewsUnsub[id]();
+                    delete overviewsUnsub[id];
+                }
+            }
+
+            // subscribe to each of the new stores of loaded notes
+            for (const id of newOverviewIDs) {
+                if (overviewsUnsub[id] !== undefined) {
+                    overviewsUnsub[id]();
+                    delete overviewsUnsub[id];
+                }
+                overviewsUnsub[id] = new_overviews[id].subscribe((data) => {
+                    note_overviews = { ...note_overviews, [id]: data };
+                });
+            }
+
+            // Update note_overviews
+            note_overviews = Object.entries(new_overviews).reduce(
+                (acc: { [id: number]: NoteOverview }, [id, overview]) => {
+                    acc[Number(id)] = get(overview);
+                    return acc;
+                },
+                {}
+            );
+        });
+
+        // If we had a specific note to load on mount, load it
+        const selected = $page.url.searchParams.get(NOTE_ID_QUERY_PARAM);
+        if (selected !== undefined) {
             try {
-                selected_note = await fetch_one(note_id);
-                selected_note_id = get(get(selected_note).overview).id;
+                await select_note(Number(selected));
             } catch (e) {
-                selected_note_id = -1;
-                selected_note = null;
+                // If we fail to load the selected note, select nothing
+                selectedID = -1;
             }
         }
-    }
+
+        loading = false;
+    });
 </script>
 
 <svelte:head>
@@ -206,119 +249,107 @@
 </svelte:head>
 
 <div class="page">
+    <!-- Search/filter area at the top of the page -->
     <section class="section-header">
         <Search placeholder="Search" bind:value={search_term} />
         <Button on:click={() => select_note(null)}
             ><CirclePlusSolid class="w-3 h-3 mr-2 text-white dark:text-white" />New</Button
         >
     </section>
-    {#if !loading}
-        <div class="holder" transition:fade={{ duration: 300 }}>
-            <div class="note-menu drop-shadow-md">
-                {#if filtered_notes.length > 0}
-                    {#each filtered_notes as curr_note (curr_note.id)}
-                        <div class="buttoncont" animate:flip={{ duration: 600, easing: quintOut }}>
-                            <Button
-                                on:click={() => {
-                                    select_note(curr_note.id);
-                                }}
-                                class="note-overview bg-stone-200 text-stone-900 w-full"
-                            >
-                                <div
-                                    class="note-overview-container"
-                                    class:selected={selected_note_id === curr_note.id}
-                                >
-                                    <div class="note-overview">
-                                        {#if curr_note.title.length > 0}
-                                            <h3 class="note-overview-title">
-                                                {curr_note.title}
-                                            </h3>
-                                        {:else}
-                                            <h3
-                                                class="note-overview-title note-overview-title-missing"
-                                            >
-                                                Untitled
-                                            </h3>
-                                        {/if}
-                                        <p class="opacity-70">
-                                            {new Date(curr_note.update_time).toLocaleString(
-                                                undefined,
-                                                date_format
-                                            )}
-                                        </p>
-                                    </div>
-                                    <div class="note-overview-bookmark">
-                                        {#if curr_note.favourite}
-                                            <button
-                                                on:click|stopPropagation={() => {
-                                                    set_favourite(curr_note.id, false);
-                                                }}
-                                                class="bookmark"
-                                            >
-                                                <BookmarkMarked />
-                                            </button>
-                                        {:else}
-                                            <button
-                                                on:click|stopPropagation={() => {
-                                                    set_favourite(curr_note.id, true);
-                                                }}
-                                                class="bookmark"
-                                            >
-                                                <BookmarkUnmarked />
-                                            </button>
-                                        {/if}
-                                    </div>
-                                </div>
-                            </Button>
-                        </div>
-                    {/each}
-                {:else}
-                    <p>No notes found</p>
-                {/if}
-            </div>
-            <div class="editor-panel">
-                <div class="card">
-                    {#if selected_note !== null}
-                        {#key get(get(selected_note).overview).id}
-                            <Note
-                                state={selected_note}
-                                bind:can_delete
-                                bind:id={selected_note_id}
-                            />
-                        {/key}
-                    {:else}
-                        {#key new_note_reset}
-                            <Note bind:can_delete bind:id={selected_note_id} />
-                        {/key}
-                    {/if}
-                </div>
-                <div class="note-delete-section">
+
+    <!-- Notes -->
+    <div class="holder" transition:fade={{ duration: 300 }} class:hidden={loading}>
+        <!-- The note overview list / note selector / sidebar -->
+        <div class="note-menu drop-shadow-md">
+            {#each filtered_notes as curr_note (curr_note.id)}
+                <div class="buttoncont" animate:flip={{ duration: 600, easing: quintOut }}>
                     <Button
-                        class="drop-shadow-md"
-                        disabled={!can_delete}
-                        on:click={() => delete_note()}>Delete</Button
+                        on:click={() => {
+                            select_note(curr_note.id);
+                        }}
+                        class="note-overview bg-stone-200 text-stone-900 w-full"
                     >
+                        <div
+                            class="note-overview-container"
+                            class:selected={selectedID === curr_note.id}
+                        >
+                            <div class="note-overview">
+                                {#if curr_note.title.length > 0}
+                                    <h3 class="note-overview-title">
+                                        {curr_note.title}
+                                    </h3>
+                                {:else}
+                                    <h3 class="note-overview-title note-overview-title-missing">
+                                        Untitled
+                                    </h3>
+                                {/if}
+                                <p class="opacity-70">
+                                    {new Date(curr_note.update_time).toLocaleString(
+                                        undefined,
+                                        DATE_FORMAT
+                                    )}
+                                </p>
+                            </div>
+                            <div class="note-overview-bookmark">
+                                {#if curr_note.favourite}
+                                    <button
+                                        on:click|stopPropagation={() => {
+                                            // set_favourite(curr_note.id, false);
+                                        }}
+                                        class="bookmark"
+                                    >
+                                        <BookmarkMarked />
+                                    </button>
+                                {:else}
+                                    <button
+                                        on:click|stopPropagation={() => {
+                                            // set_favourite(curr_note.id, true);
+                                        }}
+                                        class="bookmark"
+                                    >
+                                        <BookmarkUnmarked />
+                                    </button>
+                                {/if}
+                            </div>
+                        </div>
+                    </Button>
                 </div>
-            </div>
+            {/each}
+            <p class:hidden={filtered_notes.length > 0}>No notes found</p>
         </div>
-    {/if}
+
+        <!-- The note editor / viewer area -->
+        <div class="editor-panel">
+            <!-- Display the currently selected note -->
+            <div class="card">
+                {#key noteChange}
+                    {#if selectedNote !== null}
+                        <Notepad
+                            bind:stagedView={boundNote}
+                            initialState={Notes.toNoteInfo(selectedNote)}
+                        />
+                    {:else}
+                        <Notepad bind:stagedView={boundNote} />
+                    {/if}
+                {/key}
+            </div>
+
+            <!-- Delete the selected note -->
+            <Button class="drop-shadow-md delete-note" on:click={() => delete_note()}>
+                Delete
+            </Button>
+        </div>
+    </div>
 </div>
 
-{#if !loading}
-    <div transition:fade={{ duration: 300 }}>
-        <p class="w-full text-center">Get images working in the backend for this</p>
-    </div>
-{/if}
+<style lang="less">
+    .hidden {
+        display: none !important;
+    }
 
-<style>
     .selected {
         font-weight: bold;
         color: var(--color-theme-1);
-    }
-    .note-delete-section {
-        width: 100%;
-        display: flex;
-        justify-content: flex-end;
     }
     .editor-panel {
         width: 100%;
