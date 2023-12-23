@@ -244,7 +244,6 @@
 </script>
 
 <div>
-    <p>id: {staged.id}</p>
     <input
         class="heading"
         type="text"
