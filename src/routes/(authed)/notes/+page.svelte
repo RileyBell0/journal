@@ -250,7 +250,7 @@
 
 <div class="page">
     <!-- Search/filter area at the top of the page -->
-    <section class="section-header">
+    <section class="header">
         <Search placeholder="Search" bind:value={search_term} />
         <Button on:click={() => select_note(null)}
             ><CirclePlusSolid class="w-3 h-3 mr-2 text-white dark:text-white" />New</Button
@@ -258,7 +258,7 @@
     </section>
 
     <!-- Notes -->
-    <div class="holder" transition:fade={{ duration: 300 }} class:hidden={loading}>
+    <div class="notes" transition:fade={{ duration: 300 }} class:hidden={loading}>
         <!-- The note overview list / note selector / sidebar -->
         <div class="note-menu drop-shadow-md">
             {#each filtered_notes as note (note.id)}
@@ -267,15 +267,12 @@
                     on:click={() => {
                         select_note(note.id);
                     }}
-                    class="note-overview-container bg-stone-200 text-stone-900 w-full"
+                    class="overview-button"
                     class:selected={selectedID === note.id}
                 >
                     <!-- overview / text section -->
-                    <div class="note-overview">
-                        <h3
-                            class="note-overview-title"
-                            class:note-overview-title-missing={note.title.length === 0}
-                        >
+                    <div class="info">
+                        <h3 class="title" class:title--missing={note.title.length === 0}>
                             {note.title !== '' ? note.title : 'Untitled'}
                         </h3>
                         <p class="opacity-70">
@@ -330,91 +327,116 @@
         display: none !important;
     }
 
-    .selected {
-        font-weight: bold;
-        color: var(--color-theme-1);
-    }
-    .editor-panel {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    .note-overview {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        overflow: hidden;
-        width: 100%;
-    }
-    .note-overview-title-missing {
-        opacity: 50%;
-    }
-    .note-overview-container {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        flex-wrap: nowrap;
-        width: 100%;
-    }
-    .note-overview-title {
-        text-align: left;
-        font-weight: normal;
-        margin: 0px;
-        width: 100%;
-
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-        flex-grow: 1;
-    }
-    .note-overview-bookmark {
-        width: 20px;
-        margin: auto;
-        margin-left: 10px;
-    }
-    .bookmark {
-        padding: 4px 2px;
-    }
-    .bookmark:hover {
-        background-color: rgba(255, 255, 255, 0.5);
-        box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
-        border-radius: 5px;
-    }
-    .section-header {
-        display: flex;
-        gap: 20px;
-        justify-content: space-between;
-    }
-    .holder {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        align-items: flex-start;
-        gap: 20px;
-    }
+    // The overall page
     .page {
         display: flex;
         flex-direction: column;
         gap: 20px;
         margin-top: 30px;
-    }
-    .note-menu {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        padding: 10px;
-        background-color: white;
-        border-radius: 10px;
-        max-width: 250px;
-        width: 100%;
-    }
-    .card {
-        width: 100%;
-        background-color: white;
-        border-radius: 10px;
-        width: 100%;
-        padding: 20px 30px;
-        box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+
+        // Page header (search bar n stuff)
+        .header {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+        }
+
+        // The entire notes section for the page
+        .notes {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: flex-start;
+            gap: 20px;
+
+            .note-menu {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                padding: 10px;
+                background-color: white;
+                border-radius: 10px;
+                max-width: 250px;
+                width: 100%;
+
+                // A button for a note overview that you click to select a note
+                .overview-button {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    justify-content: space-between;
+
+                    border: 1px solid #c5c5c5;
+                    background-color: white;
+
+                    border-radius: 5px;
+                    padding: 10px 10px 10px 20px;
+
+                    &.selected {
+                        color: var(--color-theme-1);
+                        font-weight: bold;
+                        border: 1px solid #ff3e00;
+                        font-weight: bolder;
+                    }
+
+                    &:hover {
+                        background-color: #fff2ee;
+                        border: 1px solid #ff3e00;
+                    }
+
+                    .info {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-start;
+                        overflow: hidden;
+                        width: 100%;
+
+                        // The tite, with half opacity if it's not been set yet (empty)
+                        .title {
+                            text-align: left;
+                            font-weight: normal;
+                            margin: 0px;
+                            width: 100%;
+
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            flex-grow: 1;
+
+                            &.title--missing {
+                                opacity: 50%;
+                            }
+                        }
+                    }
+
+                    .bookmark {
+                        padding: 4px 2px;
+                        color: var(--color-theme-1);
+
+                        &:hover {
+                            background-color: rgba(255, 255, 255, 0.5);
+                            box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+                            border-radius: 5px;
+                        }
+                    }
+                }
+            }
+
+            .editor-panel {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+
+                .card {
+                    width: 100%;
+                    background-color: white;
+                    border-radius: 10px;
+                    width: 100%;
+                    padding: 20px 30px;
+                    box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+                }
+            }
+        }
     }
 </style>
