@@ -243,7 +243,7 @@
     });
 </script>
 
-<div>
+<div class="editor">
     <input
         class="heading"
         type="text"
@@ -259,28 +259,32 @@
     <div class="note" id={editor_holder_id} />
 </div>
 
-<style>
-    .heading {
-        border: none;
-        outline: none;
-        display: block;
-        font-size: 1.5em;
-        margin-block-start: 0.83em;
-        margin-block-end: 0.83em;
-        margin-inline-start: 0px;
-        margin-inline-end: 0px;
-        font-weight: bold;
-        padding: 0px;
-        width: 100%;
-        border-bottom: 1px solid #ccc;
-    }
+<style lang="less">
+    .editor {
+        .heading {
+            border: none;
+            outline: none;
+            display: block;
+            font-size: 1.5em;
+            margin-block-start: 0.83em;
+            margin-block-end: 0.83em;
+            margin-inline-start: 0px;
+            margin-inline-end: 0px;
+            font-weight: bold;
+            padding: 0px;
+            width: 100%;
+            border-bottom: 1px solid #ccc;
+        }
 
-    .subtext {
-        opacity: 0.8;
-    }
+        .subtext {
+            opacity: 0.8;
+        }
 
-    .note {
-        width: 100%;
-        padding: 0px;
+        .note {
+            position: relative;
+            width: 100%;
+            max-width: 650px; // defined by editorJS, so we'll match for neatness
+            padding: 0px;
+        }
     }
 </style>

@@ -251,16 +251,25 @@
 <div class="page">
     <!-- Search/filter area at the top of the page -->
     <section class="header">
-        <Search placeholder="Search" bind:value={search_term} />
-        <Button on:click={() => select_note(null)}
-            ><CirclePlusSolid class="w-3 h-3 mr-2 text-white dark:text-white" />New</Button
-        >
+        <h1 style="margin:0px;">Notes</h1>
+        <div class="actions">
+            <!-- Delete the selected note -->
+            <Button
+                class="drop-shadow-md delete-note"
+                on:click={() => delete_note()}
+                disabled={selectedID === -1}>Delete</Button
+            >
+            <Button on:click={() => select_note(null)}
+                ><CirclePlusSolid class="w-3 h-3 mr-2 text-white dark:text-white" />New</Button
+            >
+        </div>
     </section>
 
     <!-- Notes -->
     <div class="notes" transition:fade={{ duration: 300 }} class:hidden={loading}>
         <!-- The note overview list / note selector / sidebar -->
         <div class="note-menu drop-shadow-md">
+            <Search placeholder="Search" bind:value={search_term} />
             {#each filtered_notes as note (note.id)}
                 <button
                     animate:flip={{ duration: 600, easing: quintOut }}
@@ -313,11 +322,6 @@
                     {/if}
                 {/key}
             </div>
-
-            <!-- Delete the selected note -->
-            <Button class="drop-shadow-md delete-note" on:click={() => delete_note()}>
-                Delete
-            </Button>
         </div>
     </div>
 </div>
@@ -332,13 +336,21 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
+        padding: 0px 20px;
+        padding-bottom: 80px;
         margin-top: 30px;
 
         // Page header (search bar n stuff)
         .header {
             display: flex;
-            gap: 20px;
             justify-content: space-between;
+            align-items: center;
+
+            .actions {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+            }
         }
 
         // The entire notes section for the page
@@ -346,18 +358,17 @@
             display: flex;
             flex-direction: row;
             flex-wrap: nowrap;
-            align-items: flex-start;
             gap: 20px;
 
             .note-menu {
                 display: flex;
                 flex-direction: column;
-                gap: 10px;
-                padding: 10px;
-                background-color: white;
-                border-radius: 10px;
-                max-width: 250px;
+                gap: 12px;
+
                 width: 100%;
+                max-width: 250px;
+
+                border-radius: 10px;
 
                 // A button for a note overview that you click to select a note
                 .overview-button {
@@ -423,17 +434,21 @@
             }
 
             .editor-panel {
-                width: 100%;
                 display: flex;
                 flex-direction: column;
                 gap: 20px;
+                align-items: center;
+
+                width: 100%;
 
                 .card {
                     width: 100%;
+                    max-width: 650px;
+
+                    padding: 20px;
+
                     background-color: white;
                     border-radius: 10px;
-                    width: 100%;
-                    padding: 20px 30px;
                     box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
                 }
             }
