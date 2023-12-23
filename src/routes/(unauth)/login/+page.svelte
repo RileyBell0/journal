@@ -1,6 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import backend from '$lib/net/backend';
+    import { backend } from '$lib/net/backend';
 
     let email = '';
     let password = '';

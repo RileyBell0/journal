@@ -1,5 +1,5 @@
 <script lang="ts">
-    import backend from '$lib/net/backend';
+    import { backend } from '$lib/net/backend';
     import { isAxiosError } from 'axios';
     import Temp from './Temp.svelte';
 
@@ -7,7 +7,6 @@
     let authenticated = data.authenticated;
 
     const messageDuration = 2000;
-    console.log(data);
 
     let loginPlaceholder = '';
     let logoutPlaceholder = '';
