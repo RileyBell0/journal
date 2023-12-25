@@ -20,6 +20,8 @@ type NoteOverview = {
     title: string;
     update_time: number;
     favourite: boolean;
+    is_diary: boolean;
+    created_at: Date;
 };
 
 // Fields you can pass in for updating a note
@@ -36,6 +38,8 @@ type NoteInfo = {
     update_time: number;
     favourite: boolean;
     content: OutputData;
+    is_diary: boolean;
+    created_at: Date;
 };
 
 /**
@@ -75,14 +79,16 @@ class Notes {
      */
     public static async create(
         title: string,
-        content: OutputData
+        content: OutputData,
+        isDiary: boolean = false
     ): Promise<Writable<Note> | null> {
         try {
             // Store in the backend
             const res = await backend.post('/notes', {
                 content: JSON.stringify(content),
                 title: title,
-                favourite: false
+                favourite: false,
+                is_diary: isDiary
             });
             if (res.status !== 201) {
                 return null;
@@ -155,6 +161,27 @@ class Notes {
     public static async get_overview_many(page: number = 0, limit: number = 20): Promise<null | PagedResult<Writable<NoteOverview>[]>> {
         return await this.requests.make(`get_many_${page}_${limit}`, () => {
             return this.fetch_overview_many(page, limit);
+        });
+    }
+
+    /**
+     * Gets a batched list of diary notes - always hot, and fresh off the frier
+     * could we use the cached notes better? maybe. ok, yes.
+     * thoughts:
+     * - check if we can find today's note
+     * - if not, fetch
+     * - if we can, just send that back, then when they try and load MORE notes, we can 
+     * - simply load more.
+     * - > need a way to determine if there's more then. probably store an int of
+     * - the last note we've fetched, and if there are more past THAT diary
+     * 
+     * @param page the page of notes you're wanting [0,_)
+     * @param limit the number of notes per page [1,100]
+     * @returns The stores for the fetched notes AND if there's more after this, or null on failure
+     */
+    public static async get_diary_many(page: number = 0, limit: number = 20): Promise<null | PagedResult<Writable<Note>[]>> {
+        return await this.requests.make(`get_diary_many_${page}_${limit}`, () => {
+            return this.fetch_diary_many(page, limit);
         });
     }
 
@@ -260,6 +287,8 @@ class Notes {
                 return null;
             }
 
+            res.data.created_at = new Date(res.data.created_at);
+
             // Parse the returned note.content
             const note = res.data;
             note.content = JSON.parse(note.content) as OutputData;
@@ -287,6 +316,9 @@ class Notes {
                 return null;
             }
 
+            // Convert created_at from a string into a date
+            res.data.data.forEach((overview: any) => overview.created_at = new Date(overview.created_at));
+
             // Store all received notes
             const notes: Writable<Note>[] = res.data.data.map((note: NoteInfo) => {
                 return this.store(note);
@@ -311,6 +343,9 @@ class Notes {
                 return null;
             }
 
+            // Convert from a string into a date
+            res.data.created_at = new Date(res.data.created_at);
+
             return this.store_overview(res.data)
         }
         catch (e) {
@@ -332,6 +367,9 @@ class Notes {
             if (res.status !== 200) {
                 return null;
             }
+
+            // Convert created_at from a string into a date
+            res.data.data.forEach((overview: any) => overview.created_at = new Date(overview.created_at));
 
             // Store all received notes
             const overviews: Writable<NoteOverview>[] = res.data.data.map((overview: NoteOverview) => {
@@ -359,6 +397,9 @@ class Notes {
             if (res.status !== 200) {
                 return null;
             }
+
+            // Convert created_at from a string into a date
+            res.data.data.forEach((overview: any) => overview.created_at = new Date(overview.created_at));
 
             // Store all received notes
             const notes: Writable<Note>[] = res.data.data.map((note: NoteInfo) => {
@@ -390,7 +431,9 @@ class Notes {
             id: note.id,
             update_time: note.update_time,
             title: note.title,
-            favourite: note.favourite
+            favourite: note.favourite,
+            is_diary: note.is_diary,
+            created_at: note.created_at
         });
 
         // Store the note if it doesn't exist yet

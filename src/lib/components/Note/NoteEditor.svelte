@@ -65,8 +65,9 @@
     /**
      * The current state of the note within the editor - this is the up to date information.
      */
-    export let stagedView: NoteInfo;
+    export let stagedView: NoteInfo = structuredClone(initialState);
     export let autosave: boolean = true;
+    export let diary = false;
 
     $: stagedView = structuredClone(staged);
 
@@ -115,7 +116,7 @@
 
             if (saved.id === -1) {
                 // Note doesn't exist yet, create it
-                const new_note = await Notes.create(staged.title, content);
+                const new_note = await Notes.create(staged.title, content, diary);
                 if (new_note === null) {
                     return false;
                 }

@@ -1,13 +1,42 @@
 <script lang="ts">
-    import Note from '$lib/components/Note/NoteEditor.svelte';
+    import NoteBacking from '$lib/components/Note/NoteBacking.svelte';
+    import NoteEditor from '$lib/components/Note/NoteEditor.svelte';
+    import { Notes } from '$lib/data/NoteStore';
+    import type { NoteInfo } from '$lib/data/NoteStore';
+    import { onMount } from 'svelte';
 
-    // const default_title_format = {
-    // 	weekday: 'short',
-    // 	year: 'numeric',
-    // 	month: 'long',
-    // 	day: '2-digit'
-    // };
-    // new Date().toLocaleString(undefined, default_title_format);
+    const DATE_FORMAT = {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    } as Intl.DateTimeFormatOptions;
+
+    // Loaded notes
+    let diaries: NoteInfo[] = [];
+
+    // If we've got more notes we COULD load
+    let more = false;
+
+    // Cleanup
+    let loading = true;
+    let diary_unsubscribers = {};
+
+    onMount(async () => {
+        // Grab the top few diaries
+        const notes = await Notes.get_diary_many(0, 5);
+        if (notes === null) {
+            alert('Failed to load notes');
+            loading = false;
+            return;
+        }
+
+        // Store them :)
+        more = notes.more;
+        diaries = notes.data.map((store) => Notes.toNoteInfo(store));
+
+        loading = false;
+    });
 </script>
 
 <svelte:head>
@@ -15,46 +44,55 @@
     <meta name="description" content="Svelte demo app" />
 </svelte:head>
 
-<div>
-    <h1>Home</h1>
-    <p>TODO</p>
-    <ul>
-        <li>
-            This is gonna be a diary section - it'll automatically hold a blank note at the start of
-            each day (after 5am local time)
-        </li>
-        <li>
-            Be able to search by Title and/or date and/or content? how do we do content in
-            zero-knowledge?
-        </li>
-    </ul>
-</div>
-<div class="page">
-    <div class="card">
-        <Note />
-    </div>
-
-    <div class="divider" />
-
-    <div class="card">
-        <Note />
-    </div>
+<div class="page" class:hidden={loading}>
+    {#if diaries.length === 0}
+        <div class="diary-entry">
+            <h2 class="diary-date">
+                {new Date().toLocaleString(undefined, DATE_FORMAT)}
+            </h2>
+            <NoteBacking>
+                <NoteEditor diary={true} />
+            </NoteBacking>
+        </div>
+    {/if}
+    {#each diaries as diary}
+        <p>-</p>
+        <div class="diary-entry">
+            <h2 class="diary-date">
+                {new Date(diary.update_time).toLocaleString(undefined, DATE_FORMAT)}
+            </h2>
+            <NoteBacking>
+                <NoteEditor initialState={diary} />
+            </NoteBacking>
+        </div>
+    {/each}
 </div>
 
-<style>
-    .card {
-        background-color: white;
-        border-radius: 10px;
-        width: 100%;
-        max-width: 600px;
-        padding: 20px 40px;
-        box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
-        margin-left: auto;
-        margin-right: auto;
+<style lang="less">
+    .hidden {
+        display: none !important;
     }
+
     .page {
         display: flex;
         flex-direction: column;
+        align-items: center;
+
         gap: 20px;
+        width: 100%;
+        padding-top: 20px;
+
+        .diary-entry {
+            display: flex;
+            flex-direction: column;
+
+            width: 100%;
+            max-width: 650px;
+
+            .diary-date {
+                margin: 0px;
+                color: var(--text);
+            }
+        }
     }
 </style>

@@ -19,6 +19,7 @@
     import { get, type Unsubscriber, type Writable } from 'svelte/store';
     import { flip } from 'svelte/animate';
     import { quintOut } from 'svelte/easing';
+    import NoteBacking from '$lib/components/Note/NoteBacking.svelte';
 
     const DATE_FORMAT: Intl.DateTimeFormatOptions = {
         year: 'numeric',
@@ -295,7 +296,7 @@
     <div class:hidden={loading} class="editor-panel" transition:fade={{ duration: 300 }}>
         <div class="note-area">
             <!-- Display the currently selected note -->
-            <div class="note-backing">
+            <NoteBacking>
                 <!-- The note itself -->
                 {#key noteChange}
                     {#if selectedNote !== null}
@@ -307,7 +308,7 @@
                         <Notepad bind:stagedView={boundNote} />
                     {/if}
                 {/key}
-            </div>
+            </NoteBacking>
 
             <!-- The delete button, just below the note -->
             <button
@@ -456,17 +457,6 @@
                 gap: 1rem;
                 width: 100%;
                 max-width: 650px;
-
-                .note-backing {
-                    width: 100%;
-                    max-width: 650px;
-
-                    padding: 30px;
-
-                    background-color: white;
-                    border-radius: 10px;
-                    box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
-                }
 
                 .delete-button {
                     margin-left: auto;
