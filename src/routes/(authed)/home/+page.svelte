@@ -4,6 +4,7 @@
     import { Notes } from '$lib/data/NoteStore';
     import type { NoteInfo } from '$lib/data/NoteStore';
     import { onMount } from 'svelte';
+    import { fade } from 'svelte/transition';
 
     const DATE_FORMAT = {
         weekday: 'long',
@@ -57,7 +58,7 @@
     <meta name="description" content="Svelte demo app" />
 </svelte:head>
 
-<div class="page" class:hidden={loading}>
+<div class="page" class:hidden={loading} in:fade={{ duration: 300 }}>
     {#if !todaysEntryExists}
         <div class="diary-entry">
             <h2 class="diary-date">

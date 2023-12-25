@@ -261,7 +261,7 @@
     <meta name="description" content="Svelte demo app" />
 </svelte:head>
 
-<div class="page">
+<div class="page" in:fade={{ duration: 300 }}>
     <!-- The note overview list / note selector / sidebar -->
     <div class="note-sidebar drop-shadow-md">
         <Search placeholder="Search" bind:value={search_term} />
@@ -305,20 +305,22 @@
     </div>
 
     <!-- The note editor / viewer area -->
-    <div class:hidden={loading} class="editor-panel" transition:fade={{ duration: 300 }}>
+    <div class:hidden={loading} class="editor-panel">
         <div class="note-area">
             <!-- Display the currently selected note -->
             <NoteBacking>
                 <!-- The note itself -->
                 {#key noteChange}
-                    {#if selectedNote !== null}
-                        <Notepad
-                            bind:stagedView={boundNote}
-                            initialState={Notes.toNoteInfo(selectedNote)}
-                        />
-                    {:else}
-                        <Notepad bind:stagedView={boundNote} />
-                    {/if}
+                    <div in:fade={{ duration: 300 }}>
+                        {#if selectedNote !== null}
+                            <Notepad
+                                bind:stagedView={boundNote}
+                                initialState={Notes.toNoteInfo(selectedNote)}
+                            />
+                        {:else}
+                            <Notepad bind:stagedView={boundNote} />
+                        {/if}
+                    </div>
                 {/key}
             </NoteBacking>
 
