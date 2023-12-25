@@ -38,7 +38,16 @@
 
         // Store them :)
         more = notes.more;
-        diaries = notes.data.map((store) => Notes.toNoteInfo(store));
+        diaries = notes.data
+            .map((store) => Notes.toNoteInfo(store))
+            .toSorted((a, b) => {
+                if (a.created_at > b.created_at) {
+                    return -1;
+                } else if (a.created_at < b.created_at) {
+                    return 1;
+                }
+                return 0;
+            });
         loading = false;
     });
 </script>
