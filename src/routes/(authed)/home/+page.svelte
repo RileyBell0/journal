@@ -22,6 +22,11 @@
     let loading = true;
     let diary_unsubscribers = {};
 
+    $: todaysEntryExists = !(
+        diaries.length === 0 ||
+        diaries[0].created_at.toLocaleDateString() !== new Date().toLocaleDateString()
+    );
+
     onMount(async () => {
         // Grab the top few diaries
         const notes = await Notes.get_diary_many(0, 5);
@@ -34,7 +39,6 @@
         // Store them :)
         more = notes.more;
         diaries = notes.data.map((store) => Notes.toNoteInfo(store));
-
         loading = false;
     });
 </script>
@@ -45,7 +49,7 @@
 </svelte:head>
 
 <div class="page" class:hidden={loading}>
-    {#if diaries.length === 0}
+    {#if !todaysEntryExists}
         <div class="diary-entry">
             <h2 class="diary-date">
                 {new Date().toLocaleString(undefined, DATE_FORMAT)}
@@ -55,11 +59,13 @@
             </NoteBacking>
         </div>
     {/if}
-    {#each diaries as diary}
-        <p>-</p>
+    {#each diaries as diary, index}
+        {#if !todaysEntryExists || index !== 0}
+            <p>-</p>
+        {/if}
         <div class="diary-entry">
             <h2 class="diary-date">
-                {new Date(diary.update_time).toLocaleString(undefined, DATE_FORMAT)}
+                {diary.created_at.toLocaleString(undefined, DATE_FORMAT)}
             </h2>
             <NoteBacking>
                 <NoteEditor initialState={diary} />
@@ -80,7 +86,7 @@
 
         gap: 20px;
         width: 100%;
-        padding-top: 20px;
+        padding-top: 40px;
 
         .diary-entry {
             display: flex;
