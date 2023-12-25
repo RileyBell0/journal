@@ -249,11 +249,10 @@
 </svelte:head>
 
 <div class="page">
-    <!-- Notes -->
-    <div class="notes" transition:fade={{ duration: 300 }} class:hidden={loading}>
-        <!-- The note overview list / note selector / sidebar -->
-        <div class="note-menu drop-shadow-md">
-            <Search placeholder="Search" bind:value={search_term} />
+    <!-- The note overview list / note selector / sidebar -->
+    <div class="note-sidebar drop-shadow-md">
+        <Search placeholder="Search" bind:value={search_term} />
+        <div class="note-list">
             {#each filtered_notes as note (note.id)}
                 <button
                     animate:flip={{ duration: 600, easing: quintOut }}
@@ -288,43 +287,46 @@
                     </button>
                 </button>
             {/each}
-            <p class="no-notes" class:hidden={filtered_notes.length > 0}>No notes found</p>
         </div>
+        <p class="no-notes" class:hidden={filtered_notes.length > 0}>No notes found</p>
+    </div>
 
-        <!-- The note editor / viewer area -->
-        <div class="editor-panel">
-            <div class="note-area">
-                <!-- Display the currently selected note -->
-                <div class="card">
-                    <button class="button-primary new-button" on:click={() => select_note(null)}>
-                        <CirclePlusSolid class="plus-icon" /> New
-                    </button>
-                    {#key noteChange}
-                        {#if selectedNote !== null}
-                            <Notepad
-                                bind:stagedView={boundNote}
-                                initialState={Notes.toNoteInfo(selectedNote)}
-                            />
-                        {:else}
-                            <Notepad bind:stagedView={boundNote} />
-                        {/if}
-                    {/key}
-                </div>
-
-                <!-- Delete the selected note -->
-                <button
-                    class="button-secondary button--large delete-button"
-                    on:click={() => delete_note()}
-                    disabled={selectedID === -1}
-                >
-                    Delete
-                </button>
+    <!-- The note editor / viewer area -->
+    <div class:hidden={loading} class="editor-panel" transition:fade={{ duration: 300 }}>
+        <div class="note-area">
+            <!-- Display the currently selected note -->
+            <div class="note-backing">
+                <!-- The note itself -->
+                {#key noteChange}
+                    {#if selectedNote !== null}
+                        <Notepad
+                            bind:stagedView={boundNote}
+                            initialState={Notes.toNoteInfo(selectedNote)}
+                        />
+                    {:else}
+                        <Notepad bind:stagedView={boundNote} />
+                    {/if}
+                {/key}
             </div>
+
+            <!-- The delete button, just below the note -->
+            <button
+                class="button-secondary delete-button"
+                on:click={() => delete_note()}
+                disabled={selectedID === -1}
+            >
+                Delete
+            </button>
+            <button class="button-primary new-button" on:click={() => select_note(null)}>
+                <CirclePlusSolid class="plus-icon" /> New
+            </button>
         </div>
     </div>
 </div>
 
 <style lang="less">
+    @sidebar-width: 290px;
+
     .hidden {
         display: none !important;
     }
@@ -334,26 +336,33 @@
         @page-top-gap: 20px;
         display: flex;
         flex-direction: column;
-        gap: 20px;
-        padding: 0px 20px 80px 0px;
-        background-color: var(--bg-100);
+        padding-bottom: 80px;
 
-        // The entire notes section for the page
-        .notes {
+        .note-sidebar {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+
             display: flex;
-            flex-direction: row;
-            flex-wrap: nowrap;
-            gap: 20px;
+            flex-direction: column;
+            gap: 12px;
 
-            .note-menu {
+            height: calc(100vh - var(--header-height));
+            width: 100%;
+            max-width: @sidebar-width;
+            padding: 0px 20px;
+            padding-top: @page-top-gap;
+
+            background-color: var(--bg);
+
+            .note-list {
                 display: flex;
                 flex-direction: column;
                 gap: 12px;
-                background-color: var(--bg);
-                padding: 0px 20px;
-                padding-top: @page-top-gap;
+
                 width: 100%;
-                max-width: 290px;
+                overflow-y: scroll;
+                padding-bottom: 20px;
 
                 // A button for a note overview that you click to select a note
                 .overview-button {
@@ -365,7 +374,7 @@
                     border: 1px solid var(--bg-200);
                     background-color: var(--bg);
 
-                    border-radius: 5px;
+                    border-radius: 7px;
                     padding: 10px 10px 10px 20px;
 
                     box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
@@ -417,47 +426,58 @@
                         }
                     }
                 }
-
-                .no-notes {
-                    width: 100%;
-                    text-align: center;
-                }
             }
 
-            .editor-panel {
+            .no-notes {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        // The entire notes section for the page
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            padding: 0px 20px;
+
+            margin-left: @sidebar-width;
+
+            width: 100% - @sidebar-width;
+            padding-top: @page-top-gap;
+
+            .note-area {
+                position: relative;
+
                 display: flex;
                 flex-direction: column;
-                align-items: center;
+                gap: 1rem;
                 width: 100%;
-                padding-top: @page-top-gap;
+                max-width: 650px;
 
-                .note-area {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 20px;
+                .note-backing {
                     width: 100%;
                     max-width: 650px;
 
-                    .card {
-                        position: relative;
-                        width: 100%;
-                        max-width: 650px;
+                    padding: 30px;
 
-                        padding: 20px;
+                    background-color: white;
+                    border-radius: 10px;
+                    box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+                }
 
-                        background-color: white;
-                        border-radius: 10px;
-                        box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+                .delete-button {
+                    margin-left: auto;
 
-                        .new-button {
-                            position: absolute;
-                            top: 10px;
-                            right: 10px;
-                        }
-                    }
-                    .delete-button {
-                        margin-left: auto;
-                    }
+                    max-width: max-content;
+                }
+
+                .new-button {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
                 }
             }
         }
@@ -465,14 +485,16 @@
 
     .button-primary,
     .button-secondary {
-        padding: 5px 10px;
-        border-radius: 5px;
         display: flex;
         align-items: center;
         gap: 5px;
-        color: var(--text-50);
 
+        padding: 5px 10px;
+
+        border-radius: 10px;
         border: 1px solid transparent;
+
+        color: var(--text-50);
 
         &.button--large {
             padding: 10px 20px;

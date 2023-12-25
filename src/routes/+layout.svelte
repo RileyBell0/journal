@@ -18,5 +18,6 @@
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+        background-color: var(--bg-100);
     }
 </style>

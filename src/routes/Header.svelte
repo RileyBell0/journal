@@ -32,9 +32,6 @@
     </div>
 
     <nav>
-        <svg viewBox="0 0 2 3" aria-hidden="true">
-            <path d="M0,0 L1,2 C1.5,3 1.5,3 2,3 L2,0 Z" />
-        </svg>
         <ul>
             {#if authenticated}
                 <li aria-current={$page.url.pathname === '/home' ? 'page' : undefined}>
@@ -51,9 +48,6 @@
                 <a href="/">About</a>
             </li>
         </ul>
-        <svg viewBox="0 0 2 3" aria-hidden="true">
-            <path d="M0,0 L0,3 C0.5,3 0.5,3 1,2 L2,0 Z" />
-        </svg>
     </nav>
 
     <div class="corner">
@@ -79,6 +73,9 @@
     header {
         display: flex;
         justify-content: space-between;
+        background-color: var(--bg);
+        box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+        height: var(--header-height);
 
         .hidden {
             display: none !important;
@@ -172,17 +169,6 @@
         nav {
             display: flex;
             justify-content: center;
-
-            // Angled edges of the middle nav
-            svg {
-                width: 2em;
-                height: 3em;
-                display: block;
-
-                path {
-                    fill: var(--bg);
-                }
-            }
         }
 
         // the list of options in the nav

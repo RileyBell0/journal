@@ -328,7 +328,7 @@ class Notes {
     private static async fetch_overview_many(page: number = 0, limit: number = 20): Promise<null | PagedResult<Writable<NoteOverview>[]>> {
         try {
             // Fetch a page of notes
-            let res = await backend.get(`/notes?overview=true&page=${page}&page_size=${limit}`);
+            let res = await backend.get(`/notes/overviews?page=${page}&page_size=${limit}`);
             if (res.status !== 200) {
                 return null;
             }
@@ -343,6 +343,34 @@ class Notes {
             return null;
         }
     }
+
+    /**
+     * Get a page of diary notes
+     * 
+     * @param page the page you want to fetch [0,_)
+     * @param limit the number of diary notes you want to fetch. [1,100]
+     * 
+     * @returns the stores for the received notes on success, or null on failure
+     */
+    private static async fetch_diary_many(page: number = 0, limit: number = 20): Promise<null | PagedResult<Writable<Note>[]>> {
+        try {
+            // Fetch a page of notes
+            let res = await backend.get(`/notes/diary?page=${page}&page_size=${limit}`);
+            if (res.status !== 200) {
+                return null;
+            }
+
+            // Store all received notes
+            const notes: Writable<Note>[] = res.data.data.map((note: NoteInfo) => {
+                return this.store(note);
+            });
+
+            return { data: notes, more: res.data.more };
+        } catch (e) {
+            return null;
+        }
+    }
+
 
     /**
      * Adds a new note to the store, and returns the reference to said note in the store

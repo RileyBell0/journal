@@ -19,7 +19,6 @@
     <h1>Home</h1>
     <p>TODO</p>
     <ul>
-        <li>Should be similar to the notes page</li>
         <li>
             This is gonna be a diary section - it'll automatically hold a blank note at the start of
             each day (after 5am local time)
