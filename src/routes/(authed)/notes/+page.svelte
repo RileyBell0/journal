@@ -32,14 +32,12 @@
     const NOTE_ID_QUERY_PARAM = 'id';
 
     // Show loading page if we're to load a page on startup
-    let loading = $page.url.searchParams.get(NOTE_ID_QUERY_PARAM) !== undefined;
+    const initialLoadID = $page.url.searchParams.get(NOTE_ID_QUERY_PARAM);
+    let loading = true;
 
     // Selected note information
     let selectedNote: Writable<Note> | null = null;
-    let selectedID: number =
-        $page.url.searchParams.get(NOTE_ID_QUERY_PARAM) !== null
-            ? Number($page.url.searchParams.get(NOTE_ID_QUERY_PARAM))
-            : -1;
+    let selectedID: number = initialLoadID !== null ? Number(initialLoadID) : -1;
     let boundNote: NoteInfo;
 
     // Filter vars
@@ -150,7 +148,7 @@
      */
     $: {
         // Keep the selectedID up to date and stored within the URL
-        if (selectedID < 0) {
+        if (selectedID === null) {
             $page.url.searchParams.delete(NOTE_ID_QUERY_PARAM);
         } else {
             $page.url.searchParams.set(NOTE_ID_QUERY_PARAM, selectedID.toString());
@@ -229,11 +227,25 @@
             );
         });
 
-        // If we had a specific note to load on mount, load it
-        const selected = $page.url.searchParams.get(NOTE_ID_QUERY_PARAM);
-        if (selected !== undefined) {
+        // Create ourselves a view on what our displayed notes should look like
+        const overviews = sort_overviews(
+            filter_overviews(
+                Object.values(get(Notes.note_overviews)).map((elem) => get(elem)),
+                search_term
+            )
+        );
+
+        // If we had a specific note to load on mount, load it, or just show the first note
+        let selected: number | null = null;
+        if (initialLoadID !== null) {
+            selected = Number(initialLoadID).valueOf();
+        } else if (overviews.length !== 0) {
+            selected = overviews[0].id;
+        }
+
+        if (selected !== null) {
             try {
-                await select_note(Number(selected));
+                await select_note(selected);
             } catch (e) {
                 // If we fail to load the selected note, select nothing
                 selectedID = -1;
