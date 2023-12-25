@@ -1,7 +1,7 @@
 <script>
     import '../app.postcss';
     import Header from './Header.svelte';
-    import './styles.css';
+    import '$lib/styles.less';
 
     export let data;
     let authenticated = data.authenticated;

@@ -172,7 +172,6 @@
         nav {
             display: flex;
             justify-content: center;
-            --background: rgba(255, 255, 255, 0.7);
 
             // Angled edges of the middle nav
             svg {
@@ -181,7 +180,7 @@
                 display: block;
 
                 path {
-                    fill: var(--background);
+                    fill: var(--bg);
                 }
             }
         }
@@ -195,7 +194,7 @@
             justify-content: center;
             align-items: center;
             list-style: none;
-            background: var(--background);
+            background: var(--bg);
             background-size: contain;
 
             // An individual nav option
@@ -214,7 +213,7 @@
                     top: 0;
                     left: calc(50% - @size);
                     border: @size solid transparent;
-                    border-top: @size solid var(--color-theme-1);
+                    border-top: @size solid var(--primary);
                 }
 
                 a {
@@ -224,7 +223,7 @@
                     height: 100%;
                     padding: 0 0.5rem;
 
-                    color: var(--color-text);
+                    color: var(--text);
 
                     font-weight: 700;
                     font-size: 0.8rem;
@@ -235,7 +234,7 @@
                     transition: color 0.2s linear;
 
                     &:hover {
-                        color: var(--color-theme-1);
+                        color: var(--primary);
                     }
                 }
             }

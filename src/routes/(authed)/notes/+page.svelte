@@ -1,8 +1,8 @@
 <script lang="ts">
     // when deleting a note it should select the one directly above it
-    import Notepad from '$lib/components/Note/Note.svelte';
+    import Notepad from '$lib/components/Note/NoteEditor.svelte';
     import { onDestroy, onMount } from 'svelte';
-    import { Button, Search } from 'flowbite-svelte';
+    import { Search } from 'flowbite-svelte';
     import type { Note, NoteInfo, NoteOverview } from '$lib/data/NoteStore';
     import { Notes } from '$lib/data/NoteStore';
 
@@ -249,22 +249,6 @@
 </svelte:head>
 
 <div class="page">
-    <!-- Search/filter area at the top of the page -->
-    <section class="header">
-        <h1 style="margin:0px;">Notes</h1>
-        <div class="actions">
-            <!-- Delete the selected note -->
-            <Button
-                class="drop-shadow-md delete-note"
-                on:click={() => delete_note()}
-                disabled={selectedID === -1}>Delete</Button
-            >
-            <Button on:click={() => select_note(null)}
-                ><CirclePlusSolid class="w-3 h-3 mr-2 text-white dark:text-white" />New</Button
-            >
-        </div>
-    </section>
-
     <!-- Notes -->
     <div class="notes" transition:fade={{ duration: 300 }} class:hidden={loading}>
         <!-- The note overview list / note selector / sidebar -->
@@ -304,23 +288,37 @@
                     </button>
                 </button>
             {/each}
-            <p class:hidden={filtered_notes.length > 0}>No notes found</p>
+            <p class="no-notes" class:hidden={filtered_notes.length > 0}>No notes found</p>
         </div>
 
         <!-- The note editor / viewer area -->
         <div class="editor-panel">
-            <!-- Display the currently selected note -->
-            <div class="card">
-                {#key noteChange}
-                    {#if selectedNote !== null}
-                        <Notepad
-                            bind:stagedView={boundNote}
-                            initialState={Notes.toNoteInfo(selectedNote)}
-                        />
-                    {:else}
-                        <Notepad bind:stagedView={boundNote} />
-                    {/if}
-                {/key}
+            <div class="note-area">
+                <!-- Display the currently selected note -->
+                <div class="card">
+                    <button class="button-primary new-button" on:click={() => select_note(null)}>
+                        <CirclePlusSolid class="plus-icon" /> New
+                    </button>
+                    {#key noteChange}
+                        {#if selectedNote !== null}
+                            <Notepad
+                                bind:stagedView={boundNote}
+                                initialState={Notes.toNoteInfo(selectedNote)}
+                            />
+                        {:else}
+                            <Notepad bind:stagedView={boundNote} />
+                        {/if}
+                    {/key}
+                </div>
+
+                <!-- Delete the selected note -->
+                <button
+                    class="button-secondary button--large delete-button"
+                    on:click={() => delete_note()}
+                    disabled={selectedID === -1}
+                >
+                    Delete
+                </button>
             </div>
         </div>
     </div>
@@ -333,25 +331,12 @@
 
     // The overall page
     .page {
+        @page-top-gap: 20px;
         display: flex;
         flex-direction: column;
         gap: 20px;
-        padding: 0px 20px;
-        padding-bottom: 80px;
-        margin-top: 30px;
-
-        // Page header (search bar n stuff)
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-
-            .actions {
-                display: flex;
-                align-items: center;
-                gap: 20px;
-            }
-        }
+        padding: 0px 20px 80px 0px;
+        background-color: var(--bg-100);
 
         // The entire notes section for the page
         .notes {
@@ -364,11 +349,11 @@
                 display: flex;
                 flex-direction: column;
                 gap: 12px;
-
+                background-color: var(--bg);
+                padding: 0px 20px;
+                padding-top: @page-top-gap;
                 width: 100%;
-                max-width: 250px;
-
-                border-radius: 10px;
+                max-width: 290px;
 
                 // A button for a note overview that you click to select a note
                 .overview-button {
@@ -377,22 +362,23 @@
                     align-items: center;
                     justify-content: space-between;
 
-                    border: 1px solid #c5c5c5;
-                    background-color: white;
+                    border: 1px solid var(--bg-200);
+                    background-color: var(--bg);
 
                     border-radius: 5px;
                     padding: 10px 10px 10px 20px;
 
+                    box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+                    box-sizing: border-box;
+
                     &.selected {
-                        color: var(--color-theme-1);
-                        font-weight: bold;
-                        border: 1px solid #ff3e00;
-                        font-weight: bolder;
+                        background-color: var(--secondary-50);
+                        border: 1px solid var(--secondary);
                     }
 
-                    &:hover {
-                        background-color: #fff2ee;
-                        border: 1px solid #ff3e00;
+                    &:not(.selected):hover {
+                        background-color: var(--bg-50);
+                        border: 1px solid var(--secondary);
                     }
 
                     .info {
@@ -422,7 +408,7 @@
 
                     .bookmark {
                         padding: 4px 2px;
-                        color: var(--color-theme-1);
+                        color: var(--secondary);
 
                         &:hover {
                             background-color: rgba(255, 255, 255, 0.5);
@@ -431,27 +417,100 @@
                         }
                     }
                 }
+
+                .no-notes {
+                    width: 100%;
+                    text-align: center;
+                }
             }
 
             .editor-panel {
                 display: flex;
                 flex-direction: column;
-                gap: 20px;
                 align-items: center;
-
                 width: 100%;
+                padding-top: @page-top-gap;
 
-                .card {
+                .note-area {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
                     width: 100%;
                     max-width: 650px;
 
-                    padding: 20px;
+                    .card {
+                        position: relative;
+                        width: 100%;
+                        max-width: 650px;
 
-                    background-color: white;
-                    border-radius: 10px;
-                    box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+                        padding: 20px;
+
+                        background-color: white;
+                        border-radius: 10px;
+                        box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+
+                        .new-button {
+                            position: absolute;
+                            top: 10px;
+                            right: 10px;
+                        }
+                    }
+                    .delete-button {
+                        margin-left: auto;
+                    }
                 }
             }
+        }
+    }
+
+    .button-primary,
+    .button-secondary {
+        padding: 5px 10px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--text-50);
+
+        border: 1px solid transparent;
+
+        &.button--large {
+            padding: 10px 20px;
+        }
+
+        &:not(:disabled):hover {
+            cursor: pointer;
+        }
+
+        &:disabled:hover {
+            cursor: not-allowed;
+        }
+    }
+
+    .button-primary {
+        background-color: var(--primary);
+
+        &:not(:disabled):hover {
+            filter: brightness(90%);
+        }
+
+        &:disabled {
+            background-color: var(--text-300);
+        }
+    }
+
+    .button-secondary {
+        background-color: var(--bg);
+        border: 1px solid var(--secondary);
+        color: var(--secondary);
+
+        &:not(:disabled):hover {
+            filter: brightness(95%);
+        }
+
+        &:disabled {
+            color: var(--text-300);
+            border: 1px solid var(--text-300);
         }
     }
 </style>

@@ -274,10 +274,12 @@
             padding: 0px;
             width: 100%;
             border-bottom: 1px solid #ccc;
+            margin-bottom: 8px;
         }
 
         .subtext {
             opacity: 0.8;
+            margin-bottom: 10px;
         }
 
         .note {

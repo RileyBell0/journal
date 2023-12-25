@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Note from '../../../lib/Note.svelte';
+    import Note from '$lib/components/Note/NoteEditor.svelte';
 
     // const default_title_format = {
     // 	weekday: 'short',
