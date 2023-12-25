@@ -316,8 +316,11 @@ class Notes {
                 return null;
             }
 
-            // Convert created_at from a string into a date
-            res.data.data.forEach((overview: any) => overview.created_at = new Date(overview.created_at));
+            // Convert created_at from a string into a date, and parse our note content
+            res.data.data.forEach((note: any) => {
+                note.created_at = new Date(note.created_at);
+                note.content = JSON.parse(note.content);
+            });
 
             // Store all received notes
             const notes: Writable<Note>[] = res.data.data.map((note: NoteInfo) => {
@@ -398,8 +401,12 @@ class Notes {
                 return null;
             }
 
-            // Convert created_at from a string into a date
-            res.data.data.forEach((overview: any) => overview.created_at = new Date(overview.created_at));
+            // Convert created_at from a string into a date, and parse our note content
+            res.data.data.forEach((note: any) => {
+                note.created_at = new Date(note.created_at);
+                note.content = JSON.parse(note.content);
+            });
+
 
             // Store all received notes
             const notes: Writable<Note>[] = res.data.data.map((note: NoteInfo) => {
