@@ -2,7 +2,7 @@
     import '../app.postcss';
     import Header from './Header.svelte';
     import '$lib/styles.less';
-    import Notifications from '$lib/components/Notifications/Notifications.svelte';
+    import NotificationDisplayer from '$lib/components/Notifications/NotificationDisplayer.svelte';
 
     export let data;
     let authenticated = data.authenticated;
@@ -13,7 +13,7 @@
 
     <slot />
 
-    <Notifications />
+    <NotificationDisplayer />
 </div>
 
 <style>

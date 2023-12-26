@@ -1,88 +1,18 @@
 <script lang="ts">
+    import { notifications, Notifications } from './Notifications';
     import { flip } from 'svelte/animate';
-
-    const FADE_OUT_TIME_MS = 90;
-
-    /**
-     * The types of notifications that we can display - mapped
-     * from their name to the class name for said error
-     */
-    enum NotificationType {
-        Error = 'notification-error'
-    }
-
-    /**
-     * The representation / data of a uniquely identifiable notification
-     */
-    type Notification = {
-        id: number;
-        level: NotificationType;
-        message: String;
-        visible: boolean;
-    };
-
-    // We use this to generate unique IDs for each active notification
-    let currID = 0;
-
-    let notifications: Notification[] = [];
-    let notificationsMap: { [id: number]: Notification } = {};
-
-    /**
-     * Removes the given notification, fading it out first
-     *
-     * @param id the ID of the notification to be removed
-     */
-    const removeNotification = (id: number) => {
-        // Get the notification, ensure it exists and isn't currently being hidden
-        const notification = notificationsMap[id];
-        if (notification === undefined || !notification.visible) {
-            return;
-        }
-
-        // Fade out the notification (quickly)
-        notification.visible = false;
-        notifications = notifications;
-
-        // Then remove it
-        setTimeout(() => {
-            notifications = notifications.filter((notification) => notification.id !== id);
-        }, FADE_OUT_TIME_MS);
-    };
-
-    /**
-     * Adds a notification with the given level and message to the screen
-     *
-     * @param level The level of the notification
-     * @param message The message to display in the notification
-     */
-    const add = (level: NotificationType, message: string) => {
-        // Make the notification
-        const id = currID++;
-        const newNotification = { id, level, message, visible: true };
-
-        // Record it
-        notifications.push(newNotification);
-        notificationsMap[id] = newNotification;
-    };
-
-    /**
-     * Create an error notification
-     *
-     * @param message the message to display in the error notification
-     */
-    export const error = (message: string) => {
-        add(NotificationType.Error, message);
-    };
 </script>
 
 <div class="notifications-backdrop">
-    <div class="notifications-base">
-        {#each notifications as { id, level, message, visible } (id)}
-            <div class="notification-example {level}" class:fadeout={!visible} animate:flip>
+    <!-- position notifications relative to this-->
+    <div class="notifications-position">
+        {#each $notifications as { id, level, message, visible } (id)}
+            <!-- an individual notification-->
+            <div class="notification {level}" class:fadeout={!visible} animate:flip>
                 <p>{message}</p>
                 <button
                     on:click={() => {
-                        removeNotification(id);
+                        Notifications.remove(id);
                     }}>X</button
                 >
             </div>
@@ -110,13 +40,13 @@
 
         padding-bottom: 40px;
 
-        .notifications-base {
+        .notifications-position {
             position: relative;
             width: 100%;
             max-width: 400px;
             height: 0px;
 
-            .notification-example {
+            .notification {
                 @first-card-pos: -80px;
 
                 visibility: hidden;
