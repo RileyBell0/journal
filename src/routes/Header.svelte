@@ -74,7 +74,7 @@
         display: flex;
         justify-content: space-between;
         background-color: var(--bg);
-        box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow);
         height: var(--header-height);
 
         .hidden {
@@ -140,7 +140,7 @@
 
                 background-color: #f1f1f1;
                 border-radius: 5px;
-                box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+                box-shadow: var(--shadow);
 
                 & > a,
                 & > button {

@@ -85,7 +85,7 @@
     <h2>Authentication: {authenticated ? 'true' : 'false'}</h2>
     {#if !authenticated}
         <div class="section">
-            <button class="action" on:click={logIn} disabled={loginPlaceholder !== ''}
+            <button class="button-primary" on:click={logIn} disabled={loginPlaceholder !== ''}
                 >Log in</button
             >
             <Temp
@@ -97,7 +97,7 @@
         </div>
     {:else}
         <div class="section">
-            <button class="action" on:click={logOut} disabled={logoutPlaceholder !== ''}
+            <button class="button-primary" on:click={logOut} disabled={logoutPlaceholder !== ''}
                 >Log Out</button
             >
             <Temp
@@ -110,7 +110,7 @@
     {/if}
 
     <div class="section">
-        <button class="action" on:click={checkAuth} disabled={checkAuthPlaceholder !== ''}
+        <button class="button-primary" on:click={checkAuth} disabled={checkAuthPlaceholder !== ''}
             >Check authentication</button
         >
         <Temp

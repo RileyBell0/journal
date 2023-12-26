@@ -392,7 +392,7 @@
                     border-radius: 7px;
                     padding: 10px 10px 10px 20px;
 
-                    box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+                    box-shadow: var(--shadow);
                     box-sizing: border-box;
 
                     &.selected {
@@ -436,7 +436,7 @@
 
                         &:hover {
                             background-color: rgba(255, 255, 255, 0.5);
-                            box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+                            box-shadow: var(--shadow);
                             border-radius: 5px;
                         }
                     }
@@ -484,59 +484,6 @@
                     right: 10px;
                 }
             }
-        }
-    }
-
-    .button-primary,
-    .button-secondary {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-
-        padding: 5px 10px;
-
-        border-radius: 10px;
-        border: 1px solid transparent;
-
-        color: var(--text-50);
-
-        &.button--large {
-            padding: 10px 20px;
-        }
-
-        &:not(:disabled):hover {
-            cursor: pointer;
-        }
-
-        &:disabled:hover {
-            cursor: not-allowed;
-        }
-    }
-
-    .button-primary {
-        background-color: var(--primary);
-
-        &:not(:disabled):hover {
-            filter: brightness(90%);
-        }
-
-        &:disabled {
-            background-color: var(--text-300);
-        }
-    }
-
-    .button-secondary {
-        background-color: var(--bg);
-        border: 1px solid var(--secondary);
-        color: var(--secondary);
-
-        &:not(:disabled):hover {
-            filter: brightness(95%);
-        }
-
-        &:disabled {
-            color: var(--text-300);
-            border: 1px solid var(--text-300);
         }
     }
 </style>

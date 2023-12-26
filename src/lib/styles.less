@@ -148,6 +148,8 @@
 
     --header-height: 50px;
 
+    --shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+
     font-family: var(--font-body);
     color: var(--text);
 }
@@ -233,4 +235,56 @@ button:focus:not(:focus-visible) {
     position: absolute;
     width: 1px;
     white-space: nowrap;
+}
+
+// Buttons
+.button-primary,
+.button-secondary {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    padding: 5px 10px;
+
+    border-radius: 10px;
+    border: 1px solid transparent;
+
+    color: var(--text-50);
+
+    &.button--large {
+        padding: 10px 20px;
+    }
+
+    &:not(:disabled):hover {
+        cursor: pointer;
+    }
+
+    &:disabled:hover {
+        cursor: not-allowed;
+    }
+}
+.button-primary {
+    background-color: var(--primary);
+
+    &:not(:disabled):hover {
+        filter: brightness(90%);
+    }
+
+    &:disabled {
+        background-color: var(--text-300);
+    }
+}
+.button-secondary {
+    background-color: var(--bg);
+    border: 1px solid var(--secondary);
+    color: var(--secondary);
+
+    &:not(:disabled):hover {
+        filter: brightness(95%);
+    }
+
+    &:disabled {
+        color: var(--text-300);
+        border: 1px solid var(--text-300);
+    }
 }
