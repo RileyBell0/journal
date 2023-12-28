@@ -85,6 +85,8 @@
 </div>
 
 <style lang="less">
+    @import '$styles/styles.less';
+
     .hidden {
         display: none !important;
     }

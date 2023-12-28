@@ -340,6 +340,9 @@
 </div>
 
 <style lang="less">
+    @import '$styles/styles.less';
+    @import '$styles/buttons.less';
+
     @sidebar-width: 290px;
 
     .hidden {

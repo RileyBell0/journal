@@ -21,6 +21,8 @@
 </div>
 
 <style lang="less">
+    @import '$styles/styles.less';
+
     .notifications-backdrop {
         @z-index: 1000;
 

@@ -51,7 +51,9 @@
     </div>
 </div>
 
-<style>
+<style lang="less">
+    @import '$styles/styles.less';
+
     .main {
         display: flex;
         justify-content: center;

@@ -3,7 +3,9 @@
     <slot />
 </div>
 
-<style>
+<style lang="less">
+    @import '$styles/definitions.less';
+
     .note-backing {
         width: 100%;
         max-width: 650px;
@@ -12,6 +14,6 @@
 
         background-color: var(--bg);
         border-radius: 10px;
-        box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow);
     }
 </style>

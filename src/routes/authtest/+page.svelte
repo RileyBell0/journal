@@ -120,7 +120,9 @@
     </div>
 </div>
 
-<style>
+<style lang="less">
+    @import '$styles/buttons.less';
+
     .section {
         display: flex;
         align-items: center;

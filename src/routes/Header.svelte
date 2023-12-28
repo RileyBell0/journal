@@ -63,6 +63,7 @@
             <div class="dropdown" class:hidden={!profile_visible}>
                 {#if $authenticated}
                     <button on:click={signout}>Sign Out</button>
+                    <button on:click={signout}>Sign Out</button>
                 {:else}
                     <a href="/login">Login</a>
                 {/if}
@@ -72,6 +73,8 @@
 </header>
 
 <style lang="less">
+    @import '$styles/styles.less';
+
     header {
         display: flex;
         justify-content: space-between;
@@ -116,8 +119,8 @@
             width: 32px;
 
             box-sizing: border-box;
-            background-color: white;
-            border: @profile-border-width solid #ff3e00;
+            background-color: var(--bg);
+            border: @profile-border-width solid var(--primary);
             border-radius: @profile-border-radius;
 
             .profile_pic {
@@ -141,7 +144,7 @@
 
                 padding: 15px 0px;
 
-                background-color: #f1f1f1;
+                background-color: var(--bg);
                 border-radius: 5px;
                 box-shadow: var(--shadow);
 
@@ -154,15 +157,25 @@
                     width: 100%;
                     height: 32px;
 
-                    color: #ff3e00;
+                    color: var(--accent);
                     text-align: left;
 
                     cursor: pointer;
                     padding: 16px;
 
+                    border-top: 0.5px solid var(--accent);
+                    border-bottom: 0.5px solid var(--accent);
+
+                    &:first-child {
+                        border-top: 1px solid var(--accent);
+                    }
+                    &:last-child {
+                        border-bottom: 1px solid var(--accent);
+                    }
+
                     &:hover {
                         text-decoration: none;
-                        background-color: #ffdfd4;
+                        background-color: var(--bg-50);
                     }
                 }
             }

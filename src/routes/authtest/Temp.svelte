@@ -31,7 +31,7 @@
 
 <p style:margin={'0px'}>{message}</p>
 
-<style>
+<style lang="less">
     p {
         color: red;
     }
