@@ -5,8 +5,7 @@
     import { backend } from '$lib/net/backend';
     import { goto } from '$app/navigation';
     import { clickOutside } from 'svelte-use-click-outside';
-
-    export let authenticated: boolean;
+    import { authenticated } from '$lib/auth/Auth';
 
     let profile_visible = false;
 
@@ -14,7 +13,7 @@
      * Signs the user out and redirects them to the home page
      */
     const signout = async () => {
-        authenticated = false;
+        $authenticated = false;
 
         try {
             await backend.post('/auth/logout');
@@ -33,7 +32,7 @@
 
     <nav>
         <ul>
-            {#if authenticated}
+            {#if $authenticated}
                 <li aria-current={$page.url.pathname === '/home' ? 'page' : undefined}>
                     <a href="/home">Home</a>
                 </li>
@@ -62,8 +61,11 @@
         >
             <img class="profile_pic" src={profile_none} alt="Profile" />
             <div class="dropdown" class:hidden={!profile_visible}>
-                <a href="/login">Login</a>
-                <button on:click={signout}>Sign Out</button>
+                {#if $authenticated}
+                    <button on:click={signout}>Sign Out</button>
+                {:else}
+                    <a href="/login">Login</a>
+                {/if}
             </div>
         </button>
     </div>
@@ -76,6 +78,7 @@
         background-color: var(--bg);
         box-shadow: var(--shadow);
         height: var(--header-height);
+        z-index: 1;
 
         .hidden {
             display: none !important;

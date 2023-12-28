@@ -1,10 +1,8 @@
 <script lang="ts">
     import { backend } from '$lib/net/backend';
     import { isAxiosError } from 'axios';
+    import { authenticated } from '$lib/auth/Auth';
     import Temp from './Temp.svelte';
-
-    export let data;
-    let authenticated = data.authenticated;
 
     const messageDuration = 2000;
 
@@ -82,8 +80,8 @@
     <meta name="description" content="Svelte demo app" />
 </svelte:head>
 <div style={'display: flex; flex-direction: column; gap:10px'}>
-    <h2>Authentication: {authenticated ? 'true' : 'false'}</h2>
-    {#if !authenticated}
+    <h2>Authentication: {$authenticated ? 'true' : 'false'}</h2>
+    {#if !$authenticated}
         <div class="section">
             <button class="button-primary" on:click={logIn} disabled={loginPlaceholder !== ''}
                 >Log in</button

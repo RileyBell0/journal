@@ -3,13 +3,14 @@
     import Header from './Header.svelte';
     import '$lib/styles.less';
     import NotificationDisplayer from '$lib/components/Notifications/NotificationDisplayer.svelte';
+    import { authenticated } from '$lib/auth/Auth';
 
     export let data;
-    let authenticated = data.authenticated;
+    $authenticated = data.authenticated;
 </script>
 
 <div class="app">
-    <Header {authenticated} />
+    <Header />
 
     <slot />
 

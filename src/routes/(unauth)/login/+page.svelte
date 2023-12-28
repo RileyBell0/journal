@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
+    import { authenticated } from '$lib/auth/Auth';
     import { backend } from '$lib/net/backend';
 
     let email = '';
@@ -9,6 +10,7 @@
         try {
             let res = await backend.post('/auth/login', event.target);
             if (res.status === 200) {
+                $authenticated = true;
                 goto('/authtest');
             }
         } catch (e) {
