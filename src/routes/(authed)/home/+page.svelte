@@ -109,7 +109,7 @@
 
             .diary-date {
                 margin: 0px;
-                color: var(--text);
+                color: @text;
             }
         }
     }

@@ -75,7 +75,7 @@
         background-color: white;
 
         border-radius: 5px;
-        box-shadow: var(--shadow);
+        box-shadow: @shadow;
     }
 
     .login > form {
@@ -89,7 +89,7 @@
         border: none;
         padding: 7px;
         outline: 2px solid gainsboro;
-        box-shadow: var(--shadow);
+        box-shadow: @shadow;
     }
 
     .login__submit {

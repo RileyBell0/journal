@@ -78,9 +78,9 @@
     header {
         display: flex;
         justify-content: space-between;
-        background-color: var(--bg);
-        box-shadow: var(--shadow);
-        height: var(--header-height);
+        background-color: @bg;
+        box-shadow: @shadow;
+        height: @header-height;
         z-index: 1;
 
         .hidden {
@@ -119,8 +119,8 @@
             width: 32px;
 
             box-sizing: border-box;
-            background-color: var(--bg);
-            border: @profile-border-width solid var(--primary);
+            background-color: @bg;
+            border: @profile-border-width solid @primary;
             border-radius: @profile-border-radius;
 
             .profile_pic {
@@ -144,9 +144,9 @@
 
                 padding: 15px 0px;
 
-                background-color: var(--bg);
+                background-color: @bg;
                 border-radius: 5px;
-                box-shadow: var(--shadow);
+                box-shadow: @shadow;
 
                 & > a,
                 & > button {
@@ -157,25 +157,25 @@
                     width: 100%;
                     height: 32px;
 
-                    color: var(--accent);
+                    color: @accent;
                     text-align: left;
 
                     cursor: pointer;
                     padding: 16px;
 
-                    border-top: 0.5px solid var(--accent);
-                    border-bottom: 0.5px solid var(--accent);
+                    border-top: 0.5px solid rgba(@accent, 1);
+                    border-bottom: 0.5px solid rgba(@accent, 1);
 
                     &:first-child {
-                        border-top: 1px solid var(--accent);
+                        border-top: 1px solid rgba(@accent, 1);
                     }
                     &:last-child {
-                        border-bottom: 1px solid var(--accent);
+                        border-bottom: 1px solid rgba(@accent, 1);
                     }
 
                     &:hover {
                         text-decoration: none;
-                        background-color: var(--bg-50);
+                        background-color: @bg-50;
                     }
                 }
             }
@@ -196,7 +196,7 @@
             justify-content: center;
             align-items: center;
             list-style: none;
-            background: var(--bg);
+            background: @bg;
             background-size: contain;
 
             // An individual nav option
@@ -215,7 +215,7 @@
                     top: 0;
                     left: calc(50% - @size);
                     border: @size solid transparent;
-                    border-top: @size solid var(--primary);
+                    border-top: @size solid @primary;
                 }
 
                 a {
@@ -225,7 +225,7 @@
                     height: 100%;
                     padding: 0 0.5rem;
 
-                    color: var(--text);
+                    color: @text;
 
                     font-weight: 700;
                     font-size: 0.8rem;
@@ -236,7 +236,7 @@
                     transition: color 0.2s linear;
 
                     &:hover {
-                        color: var(--primary);
+                        color: @primary;
                     }
                 }
             }

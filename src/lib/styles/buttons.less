@@ -1,3 +1,5 @@
+@import '$styles/definitions.less';
+
 // Buttons
 .button-primary,
 .button-secondary {
@@ -10,7 +12,7 @@
     border-radius: 10px;
     border: 1px solid transparent;
 
-    color: var(--text-50);
+    color: @text-50;
 
     &.button--large {
         padding: 10px 20px;
@@ -25,27 +27,27 @@
     }
 }
 .button-primary {
-    background-color: var(--primary);
+    background-color: @primary;
 
     &:not(:disabled):hover {
         filter: brightness(90%);
     }
 
     &:disabled {
-        background-color: var(--text-300);
+        background-color: @text-300;
     }
 }
 .button-secondary {
-    background-color: var(--bg);
-    border: 1px solid var(--secondary);
-    color: var(--secondary);
+    background-color: @bg;
+    border: 1px solid @secondary;
+    color: @secondary;
 
     &:not(:disabled):hover {
         filter: brightness(95%);
     }
 
     &:disabled {
-        color: var(--text-300);
-        border: 1px solid var(--text-300);
+        color: @text-300;
+        border: 1px solid @text-300;
     }
 }

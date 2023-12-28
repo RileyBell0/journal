@@ -32,6 +32,8 @@
 <p style:margin={'0px'}>{message}</p>
 
 <style lang="less">
+    @import '$styles/styles.less';
+
     p {
         color: red;
     }

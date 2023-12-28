@@ -70,9 +70,9 @@
 
                 border-radius: 10px;
 
-                background-color: var(--bg);
+                background-color: @bg;
                 box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
-                border: 1px solid var(--bg-300);
+                border: 1px solid @bg-300;
 
                 &:nth-last-child(1) {
                     @nth: 0;

@@ -12,8 +12,8 @@
 
         padding: 30px;
 
-        background-color: var(--bg);
+        background-color: @bg;
         border-radius: 10px;
-        box-shadow: var(--shadow);
+        box-shadow: @shadow;
     }
 </style>

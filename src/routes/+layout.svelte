@@ -17,12 +17,12 @@
 </div>
 
 <style lang="less">
-    @import '$styles/styles.less';
+    @import '$styles/definitions.less';
 
     .app {
         display: flex;
         flex-direction: column;
         min-height: 100vh;
-        background-color: var(--bg-100);
+        background-color: @bg-100;
     }
 </style>

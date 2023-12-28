@@ -272,7 +272,7 @@
             font-weight: bold;
             padding: 0px;
             width: 100%;
-            border-bottom: 1px solid var(--bg-200);
+            border-bottom: 1px solid @bg-200;
             margin: 0px;
             margin-bottom: 8px;
         }

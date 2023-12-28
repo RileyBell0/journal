@@ -2,15 +2,15 @@
 @import '$styles/definitions.less';
 
 :root {
-    font-family: var(--font-body);
-    color: var(--text);
+    font-family: @font-body;
+    color: @text;
 }
 
 body {
     min-height: 100vh;
     margin: 0;
     background-attachment: fixed;
-    background-color: var(--bg);
+    background-color: @bg;
     background-size: 100vw 100vh;
 }
 
@@ -45,7 +45,7 @@ h3 {
 }
 
 a {
-    color: var(--accent);
+    color: @accent;
     text-decoration: none;
 
     &:hover {
@@ -55,13 +55,13 @@ a {
 
 pre {
     font-size: 16px;
-    font-family: var(--font-mono);
+    font-family: @font-mono;
     background-color: rgba(255, 255, 255, 0.45);
     border-radius: 3px;
     box-shadow: 2px 2px 6px rgb(255 255 255 / 25%);
     padding: 0.5em;
     overflow-x: auto;
-    color: var(--text);
+    color: @text;
 }
 
 button:focus:not(:focus-visible) {

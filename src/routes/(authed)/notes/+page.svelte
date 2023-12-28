@@ -365,13 +365,13 @@
             flex-direction: column;
             gap: 12px;
 
-            height: calc(100vh - var(--header-height));
+            height: calc(100vh - @header-height);
             width: 100%;
             max-width: @sidebar-width;
             padding: 0px 20px;
             padding-top: @page-top-gap;
 
-            background-color: var(--bg);
+            background-color: @bg;
 
             .note-list {
                 display: flex;
@@ -389,23 +389,23 @@
                     align-items: center;
                     justify-content: space-between;
 
-                    border: 1px solid var(--bg-200);
-                    background-color: var(--bg);
+                    border: 1px solid @bg-200;
+                    background-color: @bg;
 
                     border-radius: 7px;
                     padding: 10px 10px 10px 20px;
 
-                    box-shadow: var(--shadow);
+                    box-shadow: @shadow;
                     box-sizing: border-box;
 
                     &.selected {
-                        background-color: var(--secondary-50);
-                        border: 1px solid var(--secondary);
+                        background-color: @secondary-50;
+                        border: 1px solid @secondary;
                     }
 
                     &:not(.selected):hover {
-                        background-color: var(--bg-50);
-                        border: 1px solid var(--secondary);
+                        background-color: @bg-50;
+                        border: 1px solid @secondary;
                     }
 
                     .info {
@@ -435,11 +435,11 @@
 
                     .bookmark {
                         padding: 4px 2px;
-                        color: var(--secondary);
+                        color: @secondary;
 
                         &:hover {
                             background-color: rgba(255, 255, 255, 0.5);
-                            box-shadow: var(--shadow);
+                            box-shadow: @shadow;
                             border-radius: 5px;
                         }
                     }
