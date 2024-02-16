@@ -19,7 +19,7 @@
     import { get, type Unsubscriber, type Writable } from 'svelte/store';
     import { flip } from 'svelte/animate';
     import { quintOut } from 'svelte/easing';
-    import NoteBacking from '$lib/components/Note/NoteBacking.svelte';
+    import Card from '$lib/components/Card.svelte';
 
     const DATE_FORMAT: Intl.DateTimeFormatOptions = {
         year: 'numeric',
@@ -306,9 +306,14 @@
 
     <!-- The note editor / viewer area -->
     <div class:hidden={loading} class="editor-panel">
+        <div class="note-options">
+            <button class="button-primary new-button" on:click={() => select_note(null)}>
+                <CirclePlusSolid class="plus-icon" /> New
+            </button>
+        </div>
         <div class="note-area">
             <!-- Display the currently selected note -->
-            <NoteBacking>
+            <Card>
                 <!-- The note itself -->
                 {#key noteChange}
                     <div in:fade={{ duration: 300 }}>
@@ -322,7 +327,7 @@
                         {/if}
                     </div>
                 {/key}
-            </NoteBacking>
+            </Card>
 
             <!-- The delete button, just below the note -->
             <button
@@ -331,9 +336,6 @@
                 disabled={selectedID === -1}
             >
                 Delete
-            </button>
-            <button class="button-primary new-button" on:click={() => select_note(null)}>
-                <CirclePlusSolid class="plus-icon" /> New
             </button>
         </div>
     </div>
@@ -458,6 +460,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 20px;
 
             padding: 0px 20px;
 
@@ -465,6 +468,14 @@
 
             width: 100% - @sidebar-width;
             padding-top: @page-top-gap;
+
+            .note-options {
+                width: 100%;
+
+                .new-button {
+                    margin-left: auto;
+                }
+            }
 
             .note-area {
                 position: relative;
@@ -479,12 +490,6 @@
                     margin-left: auto;
 
                     max-width: max-content;
-                }
-
-                .new-button {
-                    position: absolute;
-                    top: 10px;
-                    right: 10px;
                 }
             }
         }

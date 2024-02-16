@@ -1,6 +1,6 @@
 <script>
     import '../app.postcss';
-    import Header from './Header.svelte';
+    import Header from '$lib/components/Header.svelte';
     import NotificationDisplayer from '$lib/components/Notifications/NotificationDisplayer.svelte';
     import { authenticated } from '$lib/auth/Auth';
 

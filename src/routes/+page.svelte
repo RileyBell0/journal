@@ -1,4 +1,5 @@
 <script lang="ts">
+    import TextEditor from '$lib/components/TextEditor.svelte';
 </script>
 
 <svelte:head>
@@ -6,6 +7,7 @@
     <meta name="description" content="About this app" />
 </svelte:head>
 <div class="text-column">
+    <TextEditor />
     <h1>About this app</h1>
 
     <p>

@@ -1,6 +1,4 @@
 <script lang="ts">
-    export const prerender = false;
-
     // Needed to give our editorJS instances unique IDs
     import { count } from './NoteCount';
 

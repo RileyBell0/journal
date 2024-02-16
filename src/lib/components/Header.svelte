@@ -33,8 +33,8 @@
     <nav>
         <ul>
             {#if $authenticated}
-                <li aria-current={$page.url.pathname === '/home' ? 'page' : undefined}>
-                    <a href="/home">Home</a>
+                <li aria-current={$page.url.pathname === '/journal' ? 'page' : undefined}>
+                    <a href="/journal">Journal</a>
                 </li>
                 <li aria-current={$page.url.pathname === '/notes' ? 'page' : undefined}>
                     <a href="/notes">Notes</a>
