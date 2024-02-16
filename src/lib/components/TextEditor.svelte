@@ -45,6 +45,14 @@
 
                 border-radius: 5px;
             }
+            p > code {
+                background-color: #e6e6e6;
+                font-size: 0.9rem;
+
+                padding: 5px;
+
+                border-radius: 5px;
+            }
         }
     }
 </style>
