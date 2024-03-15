@@ -26,6 +26,11 @@ const codeBlockShortcut = new InputRule(
         const startOfParagraph = $start.start($start.depth);
         const endOfParagraph = $start.end($start.depth);
 
+        // Check that there's no code block within this range
+        if (state.doc.rangeHasMark(start, end, schema.marks.code)) {
+            return null;
+        }
+
         // Determine the bounds of our replace (if we're replacing the current paragraph we've gotta add 1 to each of the ends)
         const replaceCurrentBlock = start === startOfParagraph;
         const replaceFrom = replaceCurrentBlock ? start - 1 : start;
@@ -49,7 +54,7 @@ const codeBlockShortcut = new InputRule(
  * Marks the code within the `` as `code`
  */
 const inlineCodeShortcut = new InputRule(
-    /(^| )`([^` ].*[^ `])`$/,
+    /(^| )`(([^` ].*[^ `]|[^ `]))`$/,
     (
         state: EditorState,
         match: RegExpMatchArray,
@@ -64,9 +69,8 @@ const inlineCodeShortcut = new InputRule(
             return null;
         }
 
-        const from = start + (match[1].length === 0 ? 0 : 1);
-
         // Remove the surrounding `` marks
+        const from = start + (match[1].length === 0 ? 0 : 1);
         tr.replaceWith(from, end, schema.text(match[2]));
 
         // Mark the text as code

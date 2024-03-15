@@ -16,7 +16,7 @@ import { schema } from 'prosemirror-schema-basic';
 import { inputRules, undoInputRule } from 'prosemirror-inputrules';
 import { Schema } from 'prosemirror-model';
 import { codeBlockShortcut, inlineCodeShortcut } from './ProseMirror/InputRules';
-import { escapeCodeBlockToParagraph, toggleItalics, toggleBold, deleteCodeblockBackspacePlugin } from './ProseMirror/Plugins';
+import { escapeCodeBlockToParagraph, toggleItalics, toggleBold, deleteCodeblockBackspacePlugin, escapeInlineCodeBlockToParagraph } from './ProseMirror/Plugins';
 
 schema.spec.nodes.addToEnd('code_inline', {
     inline: true,
@@ -42,6 +42,7 @@ const state = EditorState.create({
         }),
         deleteCodeblockBackspacePlugin,
         escapeCodeBlockToParagraph,
+        escapeInlineCodeBlockToParagraph,
         inputRules({
             rules: [
                 codeBlockShortcut,

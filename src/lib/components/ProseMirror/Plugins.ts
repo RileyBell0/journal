@@ -1,8 +1,17 @@
+/**
+ * Should probably only define actual keymaps here where the actual key itself
+ * is required and non-configurable
+ * 
+ * e.g. breaking out of a codeblock and deleting it when you press backspace
+ * only makes sense for when you press backspace
+ */
+
 import { toggleMark } from "prosemirror-commands";
 import { keymap } from "prosemirror-keymap";
-import { EditorState, TextSelection, Transaction } from "prosemirror-state";
+import { EditorState, Selection, TextSelection, Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
-import type { ResolvedPos } from "prosemirror-model";
+import type { MarkType, ResolvedPos } from "prosemirror-model";
+import { schema } from "prosemirror-schema-basic";
 
 /**
  * Toggles whether or not the selected text is bold
@@ -92,7 +101,7 @@ const escapeCodeBlockToParagraph = keymap({
  * create a new text block with the text content of the code block
  */
 const deleteCodeblockBackspacePlugin = keymap({
-    'Backspace': (state: EditorState, dispatch: ((tr: Transaction) => void) | undefined, view?: EditorView) => {
+    'Backspace': (state, dispatch, view?) => {
         if (!view) {
             return false;
         }
@@ -162,6 +171,85 @@ const deleteCodeblockBackspacePlugin = keymap({
     },
 });
 
+/**
+ * Checks if the given character has the relevant mark
+ * 
+ * @param state in the given state
+ * @param pos at the given position (that we'll resolve)
+ * @param mark does it have this mark?
+ * @returns true if the character has that mark
+ */
+function charHasMark(state: EditorState, pos: number, markType: MarkType): boolean {
+    return state.doc.resolve(pos).marks().some(mark => mark.type === markType);
+}
+
+/**
+ * Checks if the given selection is a range
+ * 
+ * @param selection The selection to check
+ * @returns true if the selection is a range, false otherwise
+ */
+function isRange(selection: Selection): boolean {
+    return selection.from !== selection.to;
+}
+
+const escapeInlineCodeBlockToParagraph = keymap({
+    'ArrowRight': (state, dispatch, view?) => {
+        if (!view) {
+            return false;
+        }
+
+        // Ensure the selection is not a range
+        const { selection, tr } = view.state;
+        if (isRange(selection)) {
+            return false;
+        }
+
+        // Ensure there's actually a character before this one we can check
+        const textStart = selection.$to.start(selection.$to.depth);
+        if (textStart >= selection.from) {
+            return false;
+        }
+
+        // Ensure the previous character is marked as code
+        if (!charHasMark(state, selection.from - 1, schema.marks.code)) {
+            return false;
+        }
+
+        // If there's no character to the RHS, we just need to insert a new one
+        // and get outta here
+        const textEnd = selection.$to.end(selection.$to.depth);
+        if (textEnd === selection.from) {
+            tr.insertText(' ', textEnd)
+            tr.removeMark(textEnd, textEnd + 1, schema.marks.code);
+
+            if (dispatch) {
+                dispatch(tr);
+            }
+
+            return true;
+        }
+
+        return false;
+    },
+    'ArrowLeft': (state, dispatch, _) => {
+        const { $from, $to } = state.selection;
+        if ($from.pos !== $to.pos) {
+            return false;
+        }
+
+        if ($from.parent.type.name === 'code') {
+            const newPos = $from.pos - 1;
+            if (dispatch) {
+                dispatch(state.tr.setSelection(Selection.near(state.doc.resolve(newPos))));
+                return true;
+            }
+            return false;
+        }
+        return false;
+    },
+})
+
 const goRightOfCodeFormatPlugin = (state: EditorState, dispatch: ((tr: Transaction) => void) | undefined, view?: EditorView) => {
     // check if we're at the last element of a code block
     debugger;
@@ -169,4 +257,4 @@ const goRightOfCodeFormatPlugin = (state: EditorState, dispatch: ((tr: Transacti
 
 }
 
-export { escapeCodeBlockToParagraph, toggleBold, toggleItalics, deleteCodeblockBackspacePlugin, goRightOfCodeFormatPlugin }
+export { escapeCodeBlockToParagraph, toggleBold, toggleItalics, deleteCodeblockBackspacePlugin, goRightOfCodeFormatPlugin, escapeInlineCodeBlockToParagraph }
