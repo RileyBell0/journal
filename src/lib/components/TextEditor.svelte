@@ -4,10 +4,9 @@
     import type { EditorView } from 'prosemirror-view';
 
     let container: HTMLDivElement;
-    let view: EditorView;
 
     onMount(() => {
-        view = createView(container);
+        const view: EditorView = createView(container);
     });
 </script>
 

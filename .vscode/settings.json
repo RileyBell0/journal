@@ -1,9 +1,32 @@
 {
-	"prettier.useTabs": false,
-	"typescript.tsdk": "node_modules/typescript/lib",
-	"workbench.colorCustomizations": {
-		"activityBar.background": "#08323E",
-		"titleBar.activeBackground": "#0B4657",
-		"titleBar.activeForeground": "#F4FBFE"
-	}
+    "prettier.useTabs": false,
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#08323E",
+        "titleBar.activeBackground": "#0B4657",
+        "titleBar.activeForeground": "#F4FBFE"
+    },
+    "favorites.resources": [
+        {
+            "filePath": "src/routes",
+            "group": "Default"
+        },
+        {
+            "filePath": "src/lib",
+            "group": "Default"
+        },
+        {
+            "filePath": "src/routes/+page.svelte",
+            "group": "Default"
+        },
+        {
+            "filePath": "src/lib/components/TextEditor.svelte",
+            "group": "Default"
+        },
+        {
+            "filePath": "src/lib/components/Editor.ts",
+            "group": "Default"
+        }
+    ],
+    "favorites.sortOrder": "ASC"
 }
