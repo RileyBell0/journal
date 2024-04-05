@@ -8,34 +8,14 @@
 
 import { toggleMark } from "prosemirror-commands";
 import { keymap } from "prosemirror-keymap";
-import { EditorState, Selection, TextSelection, Transaction } from "prosemirror-state";
+import { EditorState, Plugin, Selection, TextSelection } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
-import type { MarkType, ResolvedPos } from "prosemirror-model";
+import type { MarkType, Node, ResolvedPos } from "prosemirror-model";
 import { schema } from "prosemirror-schema-basic";
 
-/**
- * Toggles whether or not the selected text is bold
- * 
- * @param state the editor state
- * @param dispatch didn't want to type the entire function, TODO future riley come back when you know what dispatch is
- * @param view the current editor view
- * @returns Not sure, but it works - TODO come back when you know more
- */
-function toggleBold(state: EditorState, dispatch: any, view?: EditorView) {
-    return toggleMark(state.schema.marks.strong)(state, dispatch);
-}
-
-/**
- * Toggles whether or not the selected text is italics
- * 
- * @param state the editor state
- * @param dispatch didn't want to type the entire function, TODO future riley come back when you know what dispatch is
- * @param view the current editor view
- * @returns Not sure, but it works - TODO come back when you know more
- */
-function toggleItalics(state: EditorState, dispatch: any, view?: EditorView) {
-    return toggleMark(state.schema.marks.italics)(state, dispatch);
-}
+let justMarked = false;
+let codeMarkNextChar = false;
+let writeWithCodeMark = false;
 
 /**
  * Creates a paragraph if our arrow direction input would get us out of our code block
@@ -83,95 +63,6 @@ function escapeCodeBlockHandler(view: EditorView | undefined, dispatch: any, dir
 }
 
 /**
- * When in a code block, we can escape it by being at the end of it and 
- * pressing the right arrow
- */
-const escapeCodeBlockToParagraph = keymap({
-    'ArrowRight': (state, dispatch, view?) => {
-        return escapeCodeBlockHandler(view, dispatch, 'right');
-    },
-    'ArrowDown': (state, dispatch, view?) => {
-        return escapeCodeBlockHandler(view, dispatch, 'down');
-    }
-});
-
-/**
- * A plugin that'll delete your code block if your cursor is at the start of said code block.
- * If there's a text before this one it'll merge your content onto there, otherwise it'll
- * create a new text block with the text content of the code block
- */
-const deleteCodeblockBackspacePlugin = keymap({
-    'Backspace': (state, dispatch, view?) => {
-        if (!view) {
-            return false;
-        }
-
-        const { selection, tr, doc } = view.state;
-
-        // Ensure if the selection is in a code block
-        if (selection.$from.parent.type.name !== 'code_block') {
-            return false;
-        }
-
-        // Must not have anything selected - just the cursor
-        if (selection.to !== selection.from) {
-            return false;
-        }
-
-        // Ensure we're at the start of the code block
-        const $node = tr.doc.resolve(selection.from);
-        const nodeStart = $node.start($node.depth);
-        if (nodeStart !== selection.from) {
-            return false;
-        }
-
-        // Grab the content of our block - we'll be deleting this block
-        const nodeEnd = $node.end($node.depth);
-        const content = tr.doc.textBetween(nodeStart, nodeEnd, '');
-
-        // If the previous block is text, append this content to that
-        const prevNode = doc.resolve(nodeStart - 1).nodeBefore;
-        const hasPrevTextNode = prevNode && (prevNode.isText || prevNode.type.name === 'paragraph');
-
-        // Move the content into either a previous paragraph, or if that can't be
-        // done, make a new paragraph putting the content in there
-        let pos: ResolvedPos;
-        if (hasPrevTextNode) {
-            // First, we delete the code block
-            tr.deleteRange(nodeStart - 1, nodeEnd + 1);
-
-            // Add the text at the end of the previous block
-            const $prevParagraph = doc.resolve(nodeStart - 2);
-            const prevEnd = $prevParagraph.end($prevParagraph.depth);
-            tr.insertText(content, prevEnd);
-
-            // Finally we move the cursor to the end of the last text + the length of our content
-            pos = tr.doc.resolve(prevEnd)
-        } else {
-            // If there was no previous paragraph, just convert the codeblock with one
-            if (content.length > 0) {
-                tr.replaceWith(nodeStart - 1, nodeEnd + 1, view.state.schema.nodes.paragraph.create(null, view.state.schema.text(content)));
-            } else {
-                tr.replaceWith(nodeStart - 1, nodeEnd + 1, view.state.schema.nodes.paragraph.create());
-            }
-
-            const $currBlock = tr.doc.resolve(nodeStart);
-            pos = tr.doc.resolve($currBlock.start($currBlock.depth));
-        }
-
-        // Move the cursor to the correct position in the new block
-        tr.setSelection(TextSelection.create(tr.doc, pos.pos));
-
-        // Commit changes
-        if (dispatch) {
-            dispatch(tr.scrollIntoView());
-        }
-
-        return true;
-    },
-});
-
-/**
  * Checks if the given character has the relevant mark
  * 
  * @param state in the given state
@@ -193,38 +84,147 @@ function isRange(selection: Selection): boolean {
     return selection.from !== selection.to;
 }
 
-const escapeInlineCodeBlockToParagraph = keymap({
-    'ArrowRight': (state, dispatch, view?) => {
-        if (!view) {
-            return false;
-        }
+/**
+ * Gets the collapsed content of the given resolved position
+ *
+ * @param $pos The resolved position to get the content of
+ * @returns The content of the given resolved position
+ */
+function getCollapsedContent($pos: ResolvedPos): string {
+    return $pos.node().textContent.replaceAll('\n', ' ');
+}
 
-        // Ensure the selection is not a range
-        const { selection, tr } = view.state;
+/**
+ * Makes a paragraph node with the given content
+ * 
+ * @param content The content of the paragraph
+ * @returns The paragraph node
+ */
+function makeParagraph(content: string): Node {
+    if (content.length) {
+        return schema.nodes.paragraph.create(null, schema.text(content));
+    } else {
+        return schema.nodes.paragraph.create();
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+// Plugins \/ \/
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+/**
+ * Toggles whether or not the selected text is bold
+ * 
+ * @param state the editor state
+ * @param dispatch didn't want to type the entire function, TODO future riley come back when you know what dispatch is
+ * @param view the current editor view
+ * @returns Not sure, but it works - TODO come back when you know more
+ */
+function toggleBold(state: EditorState, dispatch: any, view?: EditorView) {
+    return toggleMark(state.schema.marks.strong)(state, dispatch);
+}
+
+/**
+ * Toggles whether or not the selected text is italics
+ * 
+ * @param state the editor state
+ * @param dispatch didn't want to type the entire function, TODO future riley come back when you know what dispatch is
+ * @param view the current editor view
+ * @returns Not sure, but it works - TODO come back when you know more
+ */
+function toggleItalics(state: EditorState, dispatch: any, view?: EditorView) {
+    return toggleMark(state.schema.marks.italics)(state, dispatch);
+}
+
+/**
+ * When in a code block, we can escape it by being at the end of it and 
+ * pressing the right arrow
+ */
+const escapeCodeBlockToParagraph = keymap({
+    'ArrowRight': (state, dispatch, view?) => {
+        return escapeCodeBlockHandler(view, dispatch, 'right');
+    },
+    'ArrowDown': (state, dispatch, view?) => {
+        return escapeCodeBlockHandler(view, dispatch, 'down');
+    }
+});
+
+/**
+ * A plugin that'll delete your code block if your cursor is at the start of said code block.
+ * If there's a text before this one it'll merge your content onto there, otherwise it'll
+ * create a new text block with the text content of the code block
+ */
+const deleteCodeblockBackspacePlugin = keymap({
+    'Backspace': (state, dispatch, view?) => {
+        const { selection, tr, doc } = state;
+        const { $from, from } = selection;
+
+        // The selection is not a range
         if (isRange(selection)) {
             return false;
         }
 
-        // Ensure there's actually a character before this one we can check
-        const textStart = selection.$to.start(selection.$to.depth);
-        if (textStart >= selection.from) {
+        // At the start of the block
+        if ($from.start() !== from) {
             return false;
         }
 
-        // Ensure the previous character is marked as code
-        if (!charHasMark(state, selection.from - 1, schema.marks.code)) {
+        // Within a code block
+        const $codeBlock = $from;
+        if ($from.parent.type.name !== 'code_block') {
             return false;
         }
 
-        // If there's no character to the RHS, we just need to insert a new one
-        // and get outta here
-        const textEnd = selection.$to.end(selection.$to.depth);
-        if (textEnd === selection.from) {
-            tr.insertText(' ', textEnd)
-            tr.removeMark(textEnd, textEnd + 1, schema.marks.code);
+        // END CASE: No previous node -> replace the code block with a paragraph
+        const codeBlockContent = getCollapsedContent($codeBlock);
+        const codeBlockIndex = $codeBlock.index($codeBlock.depth - 1);
+        const noPreviousNode = codeBlockIndex === 0;
+        if (noPreviousNode) {
+            tr.replaceWith($codeBlock.before(), $codeBlock.end(), makeParagraph(codeBlockContent));
+            if (dispatch) {
+                dispatch(tr.scrollIntoView());
+            }
+
+            return true;
+        }
+
+        // END CASE: Previous node is not a paragraph -> replace the code block with a paragraph
+        const prevNode: Node = $codeBlock.node($codeBlock.depth - 1).child(codeBlockIndex - 1);
+        const prevNodeIsParagraph = prevNode.type.name === 'paragraph';
+        if (!prevNodeIsParagraph) {
+            tr.replaceWith($codeBlock.before(), $codeBlock.end(), makeParagraph(codeBlockContent));
+            if (dispatch) {
+                dispatch(tr.scrollIntoView());
+            }
+
+            return true;
+        }
+
+        // END CASE: Previous node is a paragraph
+        const $prevNode = doc.resolve($codeBlock.before() - 1);
+        if (prevNodeIsParagraph) {
+
+            const prevNodeIsEmpty = prevNode.content.size === 0;
+            if (prevNodeIsEmpty) {
+                // CASE: Previous node is empty -> Delete the previous node
+                tr.deleteRange($prevNode.before(), $prevNode.after());
+            } else {
+                // CASE: Previous node is non-empty -> Merge the content
+
+                // Merge content
+                const prevNodeContent = getCollapsedContent($prevNode);
+                const mergedContent = prevNodeContent + codeBlockContent;
+                tr.replaceWith($prevNode.before(), $codeBlock.after(), makeParagraph(mergedContent));
+
+                // Move cursor to the merge point
+                const mergePoint = $prevNode.start() + prevNodeContent.length;
+                tr.setSelection(TextSelection.create(tr.doc, mergePoint));
+            }
 
             if (dispatch) {
-                dispatch(tr);
+                dispatch(tr.scrollIntoView());
             }
 
             return true;
@@ -232,29 +232,114 @@ const escapeInlineCodeBlockToParagraph = keymap({
 
         return false;
     },
-    'ArrowLeft': (state, dispatch, _) => {
-        const { $from, $to } = state.selection;
-        if ($from.pos !== $to.pos) {
+});
+
+/**
+ * 
+ */
+const arrowAtEdgeOfInlineCode = keymap({
+    'ArrowRight': (state, dispatch, view?) => {
+        const { selection, tr } = state;
+        const { from, $from } = selection;
+
+        // Selection is not a range
+        if (isRange(selection)) {
             return false;
         }
 
-        if ($from.parent.type.name === 'code') {
-            const newPos = $from.pos - 1;
-            if (dispatch) {
-                dispatch(state.tr.setSelection(Selection.near(state.doc.resolve(newPos))));
-                return true;
-            }
+        // Next character is not marked as code
+        const isEndOfBlock = $from.end($from.depth) === from;
+        if (!isEndOfBlock && charHasMark(state, from + 1, schema.marks.code)) {
             return false;
         }
-        return false;
+
+        // Previous character is marked as code
+        const isStartOfBlock = $from.start($from.depth) === from;
+        if (isStartOfBlock || !charHasMark(state, from, schema.marks.code)) {
+            return false;
+        }
+
+        // If we haven't just ran this event
+        if (codeMarkNextChar) {
+            return false;
+        }
+
+        justMarked = true;
+        codeMarkNextChar = true;
+
+        // discard event
+        tr.setSelection(TextSelection.create(tr.doc, from));
+        if (dispatch) {
+            dispatch(tr.scrollIntoView());
+        }
+
+        return true;
     },
+    'ArrowLeft': (state, dispatch, view?) => {
+        const { selection, tr } = state;
+        const { from, $from } = selection;
+
+        // Selection is not a range
+        if (isRange(selection)) {
+            return false;
+        }
+
+        // Previous character is not marked as code
+        const isStartOfBlock = $from.start($from.depth) === from;
+        if (!isStartOfBlock && charHasMark(state, from - 1, schema.marks.code)) {
+            return false;
+        }
+
+        // Next character is marked as code
+        const isEndOfBlock = $from.end($from.depth) === from;
+        if (isEndOfBlock || charHasMark(state, from, schema.marks.code)) {
+            return false;
+        }
+
+        // If we haven't just ran this event
+        if (codeMarkNextChar) {
+            return false;
+        }
+
+        justMarked = true;
+        codeMarkNextChar = true;
+
+        // discard event
+        tr.setSelection(TextSelection.create(tr.doc, from));
+        if (dispatch) {
+            dispatch(tr.scrollIntoView());
+        }
+
+        return true;
+    }
 })
 
-const goRightOfCodeFormatPlugin = (state: EditorState, dispatch: ((tr: Transaction) => void) | undefined, view?: EditorView) => {
-    // check if we're at the last element of a code block
-    debugger;
+/**
+ * 
+ * @param state 
+ * @param dispatch 
+ * @param view 
+ */
+const anyChangeUnsetInlineCodeMark = new Plugin({
+    view(editorView) {
+        return {
+            update(view) {
+                if (!justMarked) {
+                    codeMarkNextChar = false;
+                }
 
+                justMarked = false;
+            }
+        };
+    }
+});
 
+const handleArrowAtInlineCodeEdge: Plugin<any>[] = [arrowAtEdgeOfInlineCode, anyChangeUnsetInlineCodeMark];
+
+export {
+    toggleBold,
+    toggleItalics,
+    escapeCodeBlockToParagraph,
+    deleteCodeblockBackspacePlugin,
+    handleArrowAtInlineCodeEdge
 }
-
-export { escapeCodeBlockToParagraph, toggleBold, toggleItalics, deleteCodeblockBackspacePlugin, goRightOfCodeFormatPlugin, escapeInlineCodeBlockToParagraph }
